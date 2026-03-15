@@ -10,7 +10,7 @@ workflows:
     scripts:
       - name: Restore iOS project
         script: |
-          flutter create --platforms=ios .
+          flutter create --platforms=ios --org com.coolmag .
       - name: Get Flutter packages
         script: |
           flutter pub get
