@@ -1,6 +1,6 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow (Final Fix)
+    name: iOS Sideload Workflow (Stable Fix)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
@@ -13,21 +13,22 @@ workflows:
           flutter create --platforms=ios --org com.coolmag .
           flutter pub get
           
-          # Настройка минимальной версии iOS для всех подов
-          echo "post_install do |installer|
-            installer.pods_project.targets.each do |target|
-              target.build_configurations.each do |config|
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-              end
-            end
-          end" >> ios/Podfile
+          # Умная правка Podfile: интегрируемся в существующий post_install
+          # Мы заменяем стандартную заглушку на нашу логику установки версии 13.0
+          cd ios
+          sed -i '' "s/post_install do |installer|/post_install do |installer|\\
+            installer.pods_project.targets.each do |target|\\
+              target.build_configurations.each do |config|\\
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
+              end\\
+            end/g" Podfile
           
-          cd ios && pod install && cd ..
+          pod install
+          cd ..
 
       - name: Build Unsigned Debug App
         script: |
-          # Собираем DEBUG версию для реального устройства (iphoneos) без подписи
-          # Это самый стабильный вариант для Sideloadly
+          # Собираем DEBUG для iphoneos
           flutter build ios --debug --no-codesign
 
       - name: Package IPA
