@@ -8,8 +8,9 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Restore iOS project
+      - name: Clean and Restore iOS project
         script: |
+          rm -rf ios
           flutter create --platforms=ios --org com.coolmag .
       - name: Get Flutter packages
         script: |
