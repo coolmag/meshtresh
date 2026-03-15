@@ -8,19 +8,35 @@ workflows:
     scripts:
       - name: Turbo Build
         script: |
-          # 1. Восстанавливаем и подтягиваем пакеты
+          set -e # Останавливать сборку при любой ошибке
+          
+          # 1. Полная очистка
+          rm -rf ios build
+          
+          # 2. Создание проекта с нуля
           flutter create --platforms=ios --org com.coolmag .
+          
+          # 3. Настройка версии iOS в Podfile (чтобы не было предупреждений)
+          echo "platform :ios, '13.0'" > ios/Podfile
+          cat <<EOF >> ios/Podfile
+          target 'Runner' do
+            use_frameworks!
+            use_modular_headers!
+          end
+          EOF
+          
+          # 4. Получение пакетов
           flutter pub get
           
-          # 2. Устанавливаем поды
+          # 5. Установка зависимостей
           cd ios && pod install && cd ..
           
-          # 3. Собираем самую быструю Debug версию
+          # 6. Сборка (Debug - самая быстрая)
           flutter build ios --debug --no-codesign
           
-          # 4. Упаковываем в IPA
+          # 7. Упаковка в IPA
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/debug-iphoneos/Runner.app build/ios/ipa/Payload/
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa && zip -r Runner.ipa Payload
     artifacts:
       - build/ios/ipa/Runner.ipa
