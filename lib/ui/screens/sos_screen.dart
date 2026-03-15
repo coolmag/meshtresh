@@ -43,8 +43,8 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
       final meshService = context.read<MeshNetworkService>();
 
       // Get device info
-      final deviceId = meshService.localPeer.id;
-      final deviceName = meshService.localPeer.name;
+      final deviceId = meshService.deviceId ?? 'unknown';
+      final deviceName = meshService.deviceName ?? 'Unknown Device';
 
       // Determine emergency level based on type
       EmergencyLevel level;
