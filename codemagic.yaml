@@ -15,14 +15,14 @@ workflows:
           flutter create --platforms=ios --org com.coolmag .
           flutter pub get
           
-          # 2. Подготовка ресурсов
+          # 2. Генерация конфигов (критично для путей)
           flutter build ios --debug --simulator --no-codesign --config-only
           
-          # 3. Установка поды
+          # 3. Настройка Pods
           cd ios && pod install && cd ..
           
-          # 4. ПРЯМОЙ ВЫЗОВ XCODE (с указанием папки вывода)
-          # Флаг CONFIGURATION_BUILD_DIR заставит Xcode положить файл туда, где мы его ждем
+          # 4. ПРЯМОЙ ВЫЗОВ XCODE
+          # Мы принудительно задаем папки для сборки, чтобы CocoaPods не терял ресурсы
           mkdir -p build/ios/iphonesimulator
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
@@ -31,6 +31,8 @@ workflows:
                      -arch arm64 \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGNING_REQUIRED=NO \
+                     SYMROOT=$PWD/build/ios/iphonesimulator \
+                     OBJROOT=$PWD/build/ios/iphonesimulator/obj \
                      CONFIGURATION_BUILD_DIR=$PWD/build/ios/iphonesimulator \
                      build
           
