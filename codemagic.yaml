@@ -6,37 +6,34 @@ workflows:
     environment:
       flutter: stable
     scripts:
-      - name: Turbo Build
+      - name: Turbo Build (Simulator Hack)
         script: |
-          set -e # Останавливать сборку при любой ошибке
-          
-          # 1. Полная очистка
+          set -e
           rm -rf ios build
           
-          # 2. Создание проекта с нуля
+          # 1. Создаем проект
           flutter create --platforms=ios --org com.coolmag .
           
-          # 3. Настройка версии iOS в Podfile (чтобы не было предупреждений)
-          echo "platform :ios, '13.0'" > ios/Podfile
-          cat <<EOF >> ios/Podfile
-          target 'Runner' do
-            use_frameworks!
-            use_modular_headers!
-          end
-          EOF
-          
-          # 4. Получение пакетов
+          # 2. Подтягиваем зависимости
           flutter pub get
           
-          # 5. Установка зависимостей
+          # 3. Генерируем конфиги iOS (без полной сборки)
+          flutter build ios --debug --no-codesign --config-only
+          
+          # 4. ХАК: Отключаем подпись на уровне проекта Xcode
+          find ios -name "project.pbxproj" -exec sed -i '' 's/CODE_SIGNING_ALLOWED = YES/CODE_SIGNING_ALLOWED = NO/g' {} +
+          find ios -name "project.pbxproj" -exec sed -i '' 's/CODE_SIGNING_REQUIRED = YES/CODE_SIGNING_REQUIRED = NO/g' {} +
+          
+          # 5. Устанавливаем поды (теперь они будут настоящими)
           cd ios && pod install && cd ..
           
-          # 6. Сборка (Debug - самая быстрая)
-          flutter build ios --debug --no-codesign
+          # 6. Сборка для симулятора (она никогда не требует подписи!)
+          # Sideloadly умеет перепаковывать такие файлы для реального iPhone
+          flutter build ios --debug --simulator
           
-          # 7. Упаковка в IPA
+          # 7. Упаковка
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cp -r build/ios/iphonesimulator/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa && zip -r Runner.ipa Payload
     artifacts:
       - build/ios/ipa/Runner.ipa
