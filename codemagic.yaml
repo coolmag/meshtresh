@@ -15,15 +15,15 @@ workflows:
           flutter create --platforms=ios --org com.coolmag .
           flutter pub get
           
-          # 2. Подготовка Flutter ресурсов (Критически важно!)
-          # Это создаст Flutter.framework и App.framework, которые нужны Xcode
+          # 2. Подготовка ресурсов
           flutter build ios --debug --simulator --no-codesign --config-only
           
           # 3. Установка поды
           cd ios && pod install && cd ..
           
-          # 4. ПРЯМОЙ ВЫЗОВ XCODE (Игнорируем Flutter build)
-          # Собираем для симулятора - подпись НЕ ТРЕБУЕТСЯ
+          # 4. ПРЯМОЙ ВЫЗОВ XCODE (с указанием папки вывода)
+          # Флаг CONFIGURATION_BUILD_DIR заставит Xcode положить файл туда, где мы его ждем
+          mkdir -p build/ios/iphonesimulator
           xcodebuild -workspace ios/Runner.xcworkspace \
                      -scheme Runner \
                      -configuration Debug \
@@ -31,9 +31,10 @@ workflows:
                      -arch arm64 \
                      CODE_SIGNING_ALLOWED=NO \
                      CODE_SIGNING_REQUIRED=NO \
+                     CONFIGURATION_BUILD_DIR=$PWD/build/ios/iphonesimulator \
                      build
           
-          # 5. Упаковка IPA (из папки симулятора)
+          # 5. Упаковка IPA
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/iphonesimulator/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa && zip -r Runner.ipa Payload
