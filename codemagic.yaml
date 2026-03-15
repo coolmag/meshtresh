@@ -1,44 +1,42 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow
+    name: iOS Sideload Workflow (Final Fix)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
       flutter: stable
     scripts:
-      - name: Raw Xcode Build (No Sign)
+      - name: Preparation
         script: |
           set -e
           rm -rf ios build
-          
-          # 1. Восстановление проекта
           flutter create --platforms=ios --org com.coolmag .
           flutter pub get
           
-          # 2. Генерация конфигов (критично для путей)
-          flutter build ios --debug --simulator --no-codesign --config-only
+          # Настройка минимальной версии iOS для всех подов
+          echo "post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              target.build_configurations.each do |config|
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+              end
+            end
+          end" >> ios/Podfile
           
-          # 3. Настройка Pods
           cd ios && pod install && cd ..
-          
-          # 4. ПРЯМОЙ ВЫЗОВ XCODE
-          # Мы принудительно задаем папки для сборки, чтобы CocoaPods не терял ресурсы
-          mkdir -p build/ios/iphonesimulator
-          xcodebuild -workspace ios/Runner.xcworkspace \
-                     -scheme Runner \
-                     -configuration Debug \
-                     -sdk iphonesimulator \
-                     -arch arm64 \
-                     CODE_SIGNING_ALLOWED=NO \
-                     CODE_SIGNING_REQUIRED=NO \
-                     SYMROOT=$PWD/build/ios/iphonesimulator \
-                     OBJROOT=$PWD/build/ios/iphonesimulator/obj \
-                     CONFIGURATION_BUILD_DIR=$PWD/build/ios/iphonesimulator \
-                     build
-          
-          # 5. Упаковка IPA
+
+      - name: Build Unsigned Debug App
+        script: |
+          # Собираем DEBUG версию для реального устройства (iphoneos) без подписи
+          # Это самый стабильный вариант для Sideloadly
+          flutter build ios --debug --no-codesign
+
+      - name: Package IPA
+        script: |
+          set -e
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/iphonesimulator/Runner.app build/ios/ipa/Payload/
-          cd build/ios/ipa && zip -r Runner.ipa Payload
+          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          cd build/ios/ipa
+          zip -r Runner.ipa Payload
+          echo "IPA Created Successfully"
     artifacts:
       - build/ios/ipa/Runner.ipa
