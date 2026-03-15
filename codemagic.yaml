@@ -18,9 +18,20 @@ workflows:
       - name: Install CocoaPods dependencies
         script: |
           cd ios && pod install
-      - name: Flutter build iOS (Unsigned)
+      - name: Build iOS App (Force Unsigned)
         script: |
-          flutter build ios --release --no-codesign
+          # Генерируем необходимые файлы Flutter для Xcode
+          flutter build ios --release --no-codesign || true
+          
+          # Собираем проект напрямую через xcodebuild без подписи
+          xcodebuild -workspace ios/Runner.xcworkspace \
+                     -scheme Runner \
+                     -configuration Release \
+                     -sdk iphoneos \
+                     CODE_SIGNING_ALLOWED=NO \
+                     CODE_SIGNING_REQUIRED=NO \
+                     CODE_SIGN_IDENTITY="" \
+                     build
       - name: Create Unsigned IPA
         script: |
           mkdir -p build/ios/ipa/Payload
