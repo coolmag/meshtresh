@@ -7,6 +7,9 @@ workflow:
     xcode: latest
     cocoapods: default
   scripts:
+    - name: Restore iOS project
+      script: |
+        flutter create --platforms=ios .
     - name: Get Flutter packages
       script: |
         flutter pub get
