@@ -5,26 +5,20 @@ workflows:
     max_build_duration: 30
     environment:
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
-      - name: Clean and Restore iOS project
+      - name: Turbo Build
         script: |
-          rm -rf ios
+          # 1. Восстанавливаем и подтягиваем пакеты
           flutter create --platforms=ios --org com.coolmag .
-      - name: Get Flutter packages
-        script: |
           flutter pub get
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios && pod install
-      - name: Build iOS App (Speed Debug Mode)
-        script: |
-          # Собираем Debug версию - она в 5 раз быстрее и легче
+          
+          # 2. Устанавливаем поды
+          cd ios && pod install && cd ..
+          
+          # 3. Собираем самую быструю Debug версию
           flutter build ios --debug --no-codesign
-      - name: Create Unsigned IPA
-        script: |
-          # В Debug моде путь к приложению немного другой
+          
+          # 4. Упаковываем в IPA
           mkdir -p build/ios/ipa/Payload
           cp -r build/ios/debug-iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa && zip -r Runner.ipa Payload
