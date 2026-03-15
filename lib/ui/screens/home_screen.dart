@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/services/mesh_network_service.dart';
 import '../../core/services/message_storage_service.dart';
+import '../../core/services/emergency_service.dart';
 import '../../core/di/service_locator.dart';
 import '../widgets/conversation_list_item.dart';
 import '../widgets/network_status_banner.dart';
 import 'chat_screen.dart';
 import 'network_status_screen.dart';
+import 'emergency_alerts_screen.dart';
+import 'sos_screen.dart';
 
 /// Main screen showing conversation list
 class HomeScreen extends StatefulWidget {
@@ -58,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const EmergencyAlertsScreen(),
+                          builder: (_) => EmergencyAlertsScreen(),
                         ),
                       );
                     },
@@ -157,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const SOSScreen()),
+              MaterialPageRoute(builder: (_) => SOSScreen()),
             );
           },
           borderRadius: BorderRadius.circular(16),
