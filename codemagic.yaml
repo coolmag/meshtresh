@@ -45,6 +45,11 @@ workflows:
 
       - name: Build Unsigned Release App
         script: |
+          # Отключаем подпись в конфигурации самого проекта Flutter, чтобы избежать ошибки Development Team
+          echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
+          echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
+          
           # Используем ТОЛЬКО flutter build ios (Xcodebuild иногда ломает Flutter-скрипты)
           # Флаг --no-codesign отключает подпись на уровне Flutter
           flutter build ios --release --no-codesign
