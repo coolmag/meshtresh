@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/models/message.dart';
 import '../../core/services/mesh_network_service.dart';
 import '../../core/services/message_storage_service.dart';
@@ -84,7 +87,47 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
+    _messageController.clear();
+    _sendRawMessage(text);
+  }
 
+  Future<void> _sendLocation() async {
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      Position position = await Geolocator.getCurrentPosition();
+      _sendRawMessage('[GEO:${position.latitude},${position.longitude}]');
+    } catch (e) {
+      debugPrint('Location error: $e');
+    }
+  }
+
+  Future<void> _sendPhoto() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 600, // Compress for mesh network
+        imageQuality: 50,
+      );
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Image = base64Encode(bytes);
+        _sendRawMessage('[IMG:$base64Image]');
+      }
+    } catch (e) {
+      debugPrint('Photo error: $e');
+    }
+  }
+
+  void _sendRawMessage(String content) {
     final meshService = context.read<MeshNetworkService>();
     final deviceId = meshService.deviceId ?? '';
 
@@ -92,7 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
       id: _uuid.v4(),
       senderId: deviceId,
       recipientId: widget.peerId,
-      content: text,
+      content: content,
       timestamp: DateTime.now(),
       status: MessageStatus.sending,
     );
@@ -101,7 +144,6 @@ class _ChatScreenState extends State<ChatScreen> {
       _messages.add(message);
     });
 
-    _messageController.clear();
     _scrollToBottom();
 
     // Send through mesh network
@@ -272,6 +314,18 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
       child: Row(
         children: [
+          IconButton(
+            onPressed: _sendPhoto,
+            icon: const Icon(Icons.camera_alt),
+            color: AppTheme.terminalGreen,
+            tooltip: 'Send Photo',
+          ),
+          IconButton(
+            onPressed: _sendLocation,
+            icon: const Icon(Icons.location_on),
+            color: AppTheme.terminalGreen,
+            tooltip: 'Send Location',
+          ),
           const Text('> ', style: TextStyle(color: AppTheme.terminalGreen, fontWeight: FontWeight.bold, fontSize: 18)),
           Expanded(
             child: TextField(

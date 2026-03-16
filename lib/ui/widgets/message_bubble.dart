@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/message.dart';
@@ -70,16 +71,88 @@ class MessageBubble extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            message.content.toUpperCase(),
-            style: const TextStyle(
-              color: AppTheme.terminalGreen,
-              fontSize: 14,
+          _buildMessageContent(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageContent() {
+    final content = message.content;
+    
+    if (content.startsWith('[GEO:')) {
+      final coords = content.substring(5, content.length - 1);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '> TARGET COORDINATES RECEIVED:',
+            style: TextStyle(
+              color: AppTheme.secondaryColor,
               fontWeight: FontWeight.bold,
-              letterSpacing: 1.1,
+              fontFamily: 'Courier',
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: AppTheme.secondaryColor),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.satellite_alt, color: AppTheme.secondaryColor),
+                const SizedBox(width: 8),
+                Text(
+                  coords,
+                  style: const TextStyle(color: AppTheme.secondaryColor, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                ),
+              ],
             ),
           ),
         ],
+      );
+    } else if (content.startsWith('[IMG:')) {
+      final base64Str = content.substring(5, content.length - 1);
+      try {
+        final bytes = base64Decode(base64Str);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '> VISUAL DATA DECODED:',
+              style: TextStyle(
+                color: AppTheme.terminalGreen,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'Courier',
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.terminalGreen, width: 2),
+              ),
+              child: Image.memory(
+                bytes,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ],
+        );
+      } catch (e) {
+        return const Text('> [ERROR DECODING VISUAL DATA]', style: TextStyle(color: AppTheme.errorColor));
+      }
+    }
+
+    // Default Text Message
+    return Text(
+      content.toUpperCase(),
+      style: const TextStyle(
+        color: AppTheme.terminalGreen,
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 1.1,
       ),
     );
   }
