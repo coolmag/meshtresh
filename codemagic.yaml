@@ -27,6 +27,8 @@ workflows:
           plutil -insert NSBluetoothPeripheralUsageDescription -string "Приложению нужен Bluetooth для поиска других устройств." Runner/Info.plist
           plutil -insert NSLocalNetworkUsageDescription -string "Локальная сеть используется для прямой передачи сообщений." Runner/Info.plist
           plutil -insert NSLocationWhenInUseUsageDescription -string "Локация нужна для работы Nearby Connections." Runner/Info.plist
+          plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp"]' Runner/Info.plist
+          plutil -insert UIRequiresPersistentWiFi -bool true Runner/Info.plist
           
           pod install
           cd ..
