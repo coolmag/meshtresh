@@ -17,6 +17,8 @@ workflows:
           plutil -insert NSBluetoothPeripheralUsageDescription -string "App needs Bluetooth to discover other devices." ios/Runner/Info.plist
           plutil -insert NSLocalNetworkUsageDescription -string "Local network is used for direct message transfer." ios/Runner/Info.plist
           plutil -insert NSLocationWhenInUseUsageDescription -string "Location is required for Nearby Connections." ios/Runner/Info.plist
+          plutil -insert NSCameraUsageDescription -string "App needs camera access to send photo messages in Mesh network." ios/Runner/Info.plist
+          plutil -insert NSPhotoLibraryUsageDescription -string "App needs photo library access to send images." ios/Runner/Info.plist
           plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp", "_crisis-mesh._tcp", "_crisis-mesh._udp"]' ios/Runner/Info.plist
           plutil -insert UIRequiresPersistentWiFi -bool true ios/Runner/Info.plist
           
