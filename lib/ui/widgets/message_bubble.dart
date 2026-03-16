@@ -88,7 +88,7 @@ class MessageBubble extends StatelessWidget {
           const Text(
             '> TARGET COORDINATES RECEIVED:',
             style: TextStyle(
-              color: AppTheme.secondaryColor,
+              color: AppTheme.terminalGreen,
               fontWeight: FontWeight.bold,
               fontFamily: 'Courier',
             ),
@@ -97,16 +97,16 @@ class MessageBubble extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              border: Border.all(color: AppTheme.secondaryColor),
+              border: Border.all(color: AppTheme.terminalGreen),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.satellite_alt, color: AppTheme.secondaryColor),
+                const Icon(Icons.satellite_alt, color: AppTheme.terminalGreen),
                 const SizedBox(width: 8),
                 Text(
                   coords,
-                  style: const TextStyle(color: AppTheme.secondaryColor, fontFamily: 'Courier', fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: AppTheme.terminalGreen, fontFamily: 'Courier', fontWeight: FontWeight.bold),
                 ),
               ],
             ),
