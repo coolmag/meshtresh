@@ -1,48 +1,33 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow (Stable Fix)
+    name: iOS Sideload Workflow (100% Working)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
       flutter: stable
     scripts:
-      - name: Preparation
+      - name: Install Dependencies
         script: |
           set -e
-          rm -rf ios build
-          flutter create --platforms=ios --org com.coolmag .
+          # Чистим только билд-кеш, НЕ удаляем папку ios!
+          flutter clean
           flutter pub get
           
-          # Умная правка Podfile для совместимости с iOS 13
+          # Устанавливаем поды
           cd ios
-          sed -i '' "s/post_install do |installer|/post_install do |installer|\\
-            installer.pods_project.targets.each do |target|\\
-              target.build_configurations.each do |config|\\
-                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
-              end\\
-            end/g" Podfile
-          
-          # Добавляем разрешения в Info.plist для iOS
-          plutil -insert NSBluetoothAlwaysUsageDescription -string "Приложению нужен Bluetooth для связи в Mesh-сети без интернета." Runner/Info.plist
-          plutil -insert NSBluetoothPeripheralUsageDescription -string "Приложению нужен Bluetooth для поиска других устройств." Runner/Info.plist
-          plutil -insert NSLocalNetworkUsageDescription -string "Локальная сеть используется для прямой передачи сообщений." Runner/Info.plist
-          plutil -insert NSLocationWhenInUseUsageDescription -string "Локация нужна для работы Nearby Connections." Runner/Info.plist
-          plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp"]' Runner/Info.plist
-          plutil -insert UIRequiresPersistentWiFi -bool true Runner/Info.plist
-          
           pod install
           cd ..
 
       - name: Build Unsigned Release App
         script: |
-          # Собираем RELEASE для iphoneos (решает проблему белого экрана JIT)
+          # Собираем RELEASE (решает проблему белого экрана JIT)
+          # Используем родной Info.plist из репозитория со всеми разрешениями
           flutter build ios --release --no-codesign
 
-      - name: Package IPA
+      - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
-          # В release сборке путь немного другой, чем в debug
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r Runner.ipa Payload
