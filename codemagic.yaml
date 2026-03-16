@@ -64,3 +64,19 @@ workflows:
           echo "IPA Created Successfully"
     artifacts:
       - build/ios/ipa/Runner.ipa
+
+  android-workflow:
+    name: Android APK Build
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      flutter: stable
+    scripts:
+      - name: Install Dependencies
+        script: |
+          flutter pub get
+      - name: Build Android APK
+        script: |
+          flutter build apk --release
+    artifacts:
+      - build/app/outputs/flutter-apk/app-release.apk
