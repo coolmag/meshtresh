@@ -1,6 +1,6 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow (Full Regeneration)
+    name: iOS Sideload Workflow (Strict Codesign Bypass)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
@@ -9,21 +9,17 @@ workflows:
       - name: Clean and Regenerate iOS Project
         script: |
           set -e
-          # Полное удаление поврежденной папки ios
           rm -rf ios
-          
-          # Пересоздание чистой структуры iOS
           flutter create --platforms=ios --org com.coolmag .
           
-          # Инъекция нужных разрешений для пакета nearby_connections
-          plutil -insert NSBluetoothAlwaysUsageDescription -string "Приложению нужен Bluetooth для связи в Mesh-сети без интернета." ios/Runner/Info.plist
-          plutil -insert NSBluetoothPeripheralUsageDescription -string "Приложению нужен Bluetooth для поиска других устройств." ios/Runner/Info.plist
-          plutil -insert NSLocalNetworkUsageDescription -string "Локальная сеть используется для прямой передачи сообщений." ios/Runner/Info.plist
-          plutil -insert NSLocationWhenInUseUsageDescription -string "Локация нужна для работы Nearby Connections." ios/Runner/Info.plist
-          plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp"]' ios/Runner/Info.plist
+          # English strings to avoid locale/encoding issues in build
+          plutil -insert NSBluetoothAlwaysUsageDescription -string "App needs Bluetooth to connect with nearby devices in Mesh network." ios/Runner/Info.plist
+          plutil -insert NSBluetoothPeripheralUsageDescription -string "App needs Bluetooth to discover other devices." ios/Runner/Info.plist
+          plutil -insert NSLocalNetworkUsageDescription -string "Local network is used for direct message transfer." ios/Runner/Info.plist
+          plutil -insert NSLocationWhenInUseUsageDescription -string "Location is required for Nearby Connections." ios/Runner/Info.plist
+          plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp", "_crisis-mesh._tcp", "_crisis-mesh._udp"]' ios/Runner/Info.plist
           plutil -insert UIRequiresPersistentWiFi -bool true ios/Runner/Info.plist
           
-          # Умная правка Podfile: принудительно ставим iOS 13
           cd ios
           sed -i '' "s/post_install do |installer|/post_install do |installer|\\
             installer.pods_project.targets.each do |target|\\
@@ -42,14 +38,27 @@ workflows:
 
       - name: Build Unsigned Release App
         script: |
-          # Сборка в Release-режиме без подписи кода
-          flutter build ios --release --no-codesign
+          # 1. Сначала собираем Flutter (он создаст нужные скрипты и кеши, но может упасть на подписи)
+          flutter build ios --release --no-codesign || echo "Flutter build partially finished, continuing to xcodebuild..."
+          
+          # 2. Жестко перехватываем сборку через нативный xcodebuild и принудительно отключаем ЛЮБЫЕ проверки подписей
+          cd ios
+          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY=""
 
       - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
-          cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+          
+          # Ищем собранный Runner.app, так как xcodebuild иногда кладет его в другую директорию
+          APP_DIR=$(find build -name "Runner.app" -type d | head -n 1)
+          if [ -z "$APP_DIR" ]; then
+             APP_DIR=$(find ios/build -name "Runner.app" -type d | head -n 1)
+          fi
+          
+          echo "Found app at: $APP_DIR"
+          cp -r "$APP_DIR" build/ios/ipa/Payload/
+          
           cd build/ios/ipa
           zip -r Runner.ipa Payload
           echo "IPA Created Successfully"
