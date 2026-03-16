@@ -43,7 +43,7 @@ dependencies:
   logger: ^2.4.0
   equatable: ^2.0.5
   geolocator: ^11.0.0
-  image_picker: ^10.4.7
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:
