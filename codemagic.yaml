@@ -1,27 +1,48 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow (100% Working)
+    name: iOS Sideload Workflow (Full Regeneration)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
       flutter: stable
     scripts:
+      - name: Clean and Regenerate iOS Project
+        script: |
+          set -e
+          # Полное удаление поврежденной папки ios
+          rm -rf ios
+          
+          # Пересоздание чистой структуры iOS
+          flutter create --platforms=ios --org com.coolmag .
+          
+          # Инъекция нужных разрешений для пакета nearby_connections
+          plutil -insert NSBluetoothAlwaysUsageDescription -string "Приложению нужен Bluetooth для связи в Mesh-сети без интернета." ios/Runner/Info.plist
+          plutil -insert NSBluetoothPeripheralUsageDescription -string "Приложению нужен Bluetooth для поиска других устройств." ios/Runner/Info.plist
+          plutil -insert NSLocalNetworkUsageDescription -string "Локальная сеть используется для прямой передачи сообщений." ios/Runner/Info.plist
+          plutil -insert NSLocationWhenInUseUsageDescription -string "Локация нужна для работы Nearby Connections." ios/Runner/Info.plist
+          plutil -insert NSBonjourServices -json '["_mp-connection._tcp", "_mp-connection._udp"]' ios/Runner/Info.plist
+          plutil -insert UIRequiresPersistentWiFi -bool true ios/Runner/Info.plist
+          
+          # Умная правка Podfile: принудительно ставим iOS 13
+          cd ios
+          sed -i '' "s/post_install do |installer|/post_install do |installer|\\
+            installer.pods_project.targets.each do |target|\\
+              target.build_configurations.each do |config|\\
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
+              end\\
+            end/g" Podfile
+
       - name: Install Dependencies
         script: |
           set -e
-          # Чистим только билд-кеш, НЕ удаляем папку ios!
-          flutter clean
           flutter pub get
-          
-          # Устанавливаем поды
           cd ios
           pod install
           cd ..
 
       - name: Build Unsigned Release App
         script: |
-          # Собираем RELEASE (решает проблему белого экрана JIT)
-          # Используем родной Info.plist из репозитория со всеми разрешениями
+          # Сборка в Release-режиме без подписи кода
           flutter build ios --release --no-codesign
 
       - name: Package IPA for Sideloadly
