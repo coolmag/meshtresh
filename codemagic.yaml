@@ -1,6 +1,6 @@
 workflows:
   ios-sideload-workflow:
-    name: iOS Sideload Workflow (Strict Codesign Bypass)
+    name: iOS Sideload Workflow (Stable Flutter Build)
     instance_type: mac_mini_m2
     max_build_duration: 30
     environment:
@@ -23,6 +23,7 @@ workflows:
           plutil -insert UIRequiresPersistentWiFi -bool true ios/Runner/Info.plist
           
           cd ios
+          # Правильный способ добавления макросов для permission_handler в Ruby (Podfile)
           sed -i '' "s/post_install do |installer|/post_install do |installer|\\
             installer.pods_project.targets.each do |target|\\
               target.build_configurations.each do |config|\\
@@ -34,31 +35,26 @@ workflows:
       - name: Install Dependencies
         script: |
           set -e
+          flutter clean
           flutter pub get
           cd ios
-          pod install
+          # Очистка кеша CocoaPods
+          rm -rf Pods Podfile.lock
+          pod install --repo-update
           cd ..
 
       - name: Build Unsigned Release App
         script: |
-          # 1. Сначала собираем Flutter (он создаст нужные скрипты и кеши, но может упасть на подписи)
-          flutter build ios --release --no-codesign || echo "Flutter build partially finished, continuing to xcodebuild..."
-          
-          # 2. Жестко перехватываем сборку через нативный xcodebuild и принудительно отключаем ЛЮБЫЕ проверки подписей
-          cd ios
-          xcodebuild -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos build CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY=""
+          # Используем ТОЛЬКО flutter build ios (Xcodebuild иногда ломает Flutter-скрипты)
+          # Флаг --no-codesign отключает подпись на уровне Flutter
+          flutter build ios --release --no-codesign
 
       - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Ищем собранный Runner.app, так как xcodebuild иногда кладет его в другую директорию
-          APP_DIR=$(find build -name "Runner.app" -type d | head -n 1)
-          if [ -z "$APP_DIR" ]; then
-             APP_DIR=$(find ios/build -name "Runner.app" -type d | head -n 1)
-          fi
-          
+          APP_DIR=$(find build/ios/iphoneos -name "Runner.app" -type d | head -n 1)
           echo "Found app at: $APP_DIR"
           cp -r "$APP_DIR" build/ios/ipa/Payload/
           
