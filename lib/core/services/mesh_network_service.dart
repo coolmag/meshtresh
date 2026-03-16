@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
+import 'package:flutter_nearby_connections/flutter_nearby_connections.dart';
 import '../models/peer.dart';
 import '../models/message.dart';
 
@@ -10,11 +12,14 @@ class MeshNetworkService extends ChangeNotifier {
   
   // Current state
   final Map<String, Peer> _peers = {};
-  final Map<String, DateTime> _lastPeerUpdate = {};
   bool _isScanning = false;
   bool _isAdvertising = false;
   String? _deviceId;
   String? _deviceName;
+
+  late NearbyService _nearbyService;
+  StreamSubscription? _subscription;
+  StreamSubscription? _dataSubscription;
 
   // Callbacks
   Function(Message)? onMessageReceived;
@@ -35,85 +40,161 @@ class MeshNetworkService extends ChangeNotifier {
     _deviceId = deviceId;
     _deviceName = deviceName;
     _logger.i('Mesh network initialized: $deviceName ($deviceId)');
+
+    _nearbyService = NearbyService();
+    await _nearbyService.init(
+      serviceType: 'crisis-mesh',
+      deviceName: deviceName,
+      strategy: Strategy.P2P_CLUSTER,
+      callback: (List<Device> devicesList) {
+        _handleDevicesListUpdate(devicesList);
+      },
+    );
+
+    _dataSubscription = _nearbyService.dataReceivedSubscription(callback: (data) {
+      _handleRawData(data);
+    });
+  }
+
+  void _handleDevicesListUpdate(List<Device> devicesList) {
+    _logger.i('Nearby devices updated: ${devicesList.length} devices');
+    
+    // Check for missing peers (disconnected)
+    final newDeviceIds = devicesList.map((d) => d.deviceId).toSet();
+    final currentPeerIds = _peers.keys.toSet();
+    
+    for (final id in currentPeerIds) {
+      if (!newDeviceIds.contains(id) && _peers[id]?.status != PeerStatus.offline) {
+        _logger.i('Peer disconnected: $id');
+        _peers[id] = _peers[id]!.copyWith(status: PeerStatus.offline);
+        onPeerDisconnected?.call(id);
+      }
+    }
+
+    for (var device in devicesList) {
+      final status = _mapSessionState(device.state);
+      final existingPeer = _peers[device.deviceId];
+      
+      final peer = existingPeer?.copyWith(
+        status: status,
+        lastSeen: DateTime.now(),
+      ) ?? Peer(
+        id: device.deviceId,
+        name: device.deviceName,
+        lastSeen: DateTime.now(),
+        status: status,
+        deviceType: 'Unknown',
+        signalStrength: -50,
+      );
+
+      if (existingPeer == null) {
+        _logger.i('New peer discovered: ${peer.name}');
+        onPeerDiscovered?.call(peer);
+      }
+      
+      _peers[peer.id] = peer;
+
+      // Auto-connect to available peers in a mesh network
+      if (device.state == SessionState.notConnected) {
+        _logger.i('Auto-inviting peer: ${device.deviceName}');
+        _nearbyService.invitePeer(
+          deviceID: device.deviceId,
+          deviceName: device.deviceName,
+        );
+      }
+    }
+    
+    notifyListeners();
+  }
+
+  PeerStatus _mapSessionState(SessionState state) {
+    switch (state) {
+      case SessionState.connected:
+        return PeerStatus.online;
+      case SessionState.connecting:
+        return PeerStatus.connecting;
+      case SessionState.notConnected:
+        return PeerStatus.nearby;
+    }
+  }
+
+  void _handleRawData(dynamic data) {
+    try {
+      final messageStr = data['message'];
+      final json = jsonDecode(messageStr);
+      final message = Message.fromJson(json);
+      _handleReceivedMessage(message);
+    } catch (e) {
+      _logger.e('Error parsing message: $e');
+    }
   }
 
   /// Start scanning for nearby peers
   Future<void> startScanning() async {
     if (_isScanning) return;
-    
     _logger.i('Starting peer discovery...');
     _isScanning = true;
     notifyListeners();
 
-    // TODO: Implement platform-specific discovery
-    // Android: Nearby Connections API, WiFi Direct
-    // iOS: Multipeer Connectivity
-    
-    // Simulate peer discovery for now
-    _simulatePeerDiscovery();
+    await _nearbyService.startBrowsingForPeers();
   }
 
   /// Stop scanning for peers
   Future<void> stopScanning() async {
     if (!_isScanning) return;
-    
     _logger.i('Stopping peer discovery...');
     _isScanning = false;
     notifyListeners();
+
+    await _nearbyService.stopBrowsingForPeers();
   }
 
   /// Start advertising this device
   Future<void> startAdvertising() async {
     if (_isAdvertising) return;
-    
     _logger.i('Starting advertising: $_deviceName');
     _isAdvertising = true;
     notifyListeners();
 
-    // TODO: Implement platform-specific advertising
+    await _nearbyService.startAdvertisingPeer();
   }
 
   /// Stop advertising this device
   Future<void> stopAdvertising() async {
     if (!_isAdvertising) return;
-    
     _logger.i('Stopping advertising');
     _isAdvertising = false;
     notifyListeners();
+
+    await _nearbyService.stopAdvertisingPeer();
   }
 
-  /// Connect to a specific peer
+  /// Connect to a specific peer manually
   Future<bool> connectToPeer(String peerId) async {
     _logger.i('Connecting to peer: $peerId');
-    
     final peer = _peers[peerId];
     if (peer == null) {
       _logger.w('Peer not found: $peerId');
       return false;
     }
 
-    // Update peer status
-    _updatePeer(peer.copyWith(status: PeerStatus.connecting));
+    _peers[peerId] = peer.copyWith(status: PeerStatus.connecting);
+    notifyListeners();
 
-    // TODO: Implement platform-specific connection
-    
-    // Simulate connection
-    await Future.delayed(const Duration(seconds: 1));
-    _updatePeer(peer.copyWith(status: PeerStatus.online));
-    
+    _nearbyService.invitePeer(deviceID: peerId, deviceName: peer.name);
     return true;
   }
 
   /// Disconnect from a peer
   Future<void> disconnectFromPeer(String peerId) async {
     _logger.i('Disconnecting from peer: $peerId');
+    _nearbyService.disconnectPeer(deviceID: peerId);
     
     final peer = _peers[peerId];
     if (peer != null) {
-      _updatePeer(peer.copyWith(status: PeerStatus.offline));
+      _peers[peerId] = peer.copyWith(status: PeerStatus.offline);
+      notifyListeners();
     }
-
-    // TODO: Implement platform-specific disconnection
   }
 
   /// Send a message through the mesh network
@@ -133,15 +214,9 @@ class MeshNetworkService extends ChangeNotifier {
   /// Send message directly to a connected peer
   Future<bool> _sendDirectMessage(Message message, Peer peer) async {
     try {
-      // TODO: Implement platform-specific message sending
-      // final messageJson = jsonEncode(message.toJson());
-      // Use messageJson when implementing real network transmission
-      
+      final messageJson = jsonEncode(message.toJson());
       _logger.d('Sending direct message to ${peer.name}: ${message.content}');
-      
-      // Simulate sending
-      await Future.delayed(const Duration(milliseconds: 100));
-      
+      _nearbyService.sendMessage(peer.id, messageJson);
       return true;
     } catch (e) {
       _logger.e('Failed to send message: $e');
@@ -166,9 +241,12 @@ class MeshNetworkService extends ChangeNotifier {
     
     int successCount = 0;
     for (final peer in onlinePeersList) {
-      final forwarded = message.incrementHop(_deviceId!);
-      if (await _sendDirectMessage(forwarded, peer)) {
-        successCount++;
+      // Don't send back to the immediate sender (basic loop prevention)
+      if (peer.id != message.senderId) {
+        final forwarded = message.incrementHop(_deviceId!);
+        if (await _sendDirectMessage(forwarded, peer)) {
+          successCount++;
+        }
       }
     }
 
@@ -195,82 +273,13 @@ class MeshNetworkService extends ChangeNotifier {
     }
   }
 
-  /// Update or add a peer
-  void _updatePeer(Peer peer) {
-    final existing = _peers[peer.id];
-    if (existing == null) {
-      _logger.i('New peer discovered: ${peer.name}');
-      _peers[peer.id] = peer;
-      onPeerDiscovered?.call(peer);
-    } else {
-      _peers[peer.id] = peer;
-    }
-    
-    _lastPeerUpdate[peer.id] = DateTime.now();
-    notifyListeners();
-  }
-
-  /// Remove stale peers (not seen in a while)
-  void _cleanupStalePeers() {
-    final now = DateTime.now();
-    const staleThreshold = Duration(minutes: 5);
-    
-    final staleIds = <String>[];
-    _lastPeerUpdate.forEach((id, lastUpdate) {
-      if (now.difference(lastUpdate) > staleThreshold) {
-        staleIds.add(id);
-      }
-    });
-
-    for (final id in staleIds) {
-      _logger.i('Removing stale peer: $id');
-      _peers.remove(id);
-      _lastPeerUpdate.remove(id);
-      onPeerDisconnected?.call(id);
-    }
-
-    if (staleIds.isNotEmpty) {
-      notifyListeners();
-    }
-  }
-
-  /// Simulate peer discovery (for testing)
-  void _simulatePeerDiscovery() {
-    // This is temporary - replace with real discovery
-    Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (!_isScanning) {
-        timer.cancel();
-        return;
-      }
-
-      // Simulate finding a random peer
-      final simulatedPeer = Peer(
-        id: 'peer_${DateTime.now().millisecondsSinceEpoch}',
-        name: 'User ${_peers.length + 1}',
-        deviceType: 'Android',
-        lastSeen: DateTime.now(),
-        signalStrength: -65,
-      );
-
-      _updatePeer(simulatedPeer);
-    });
-
-    // Cleanup stale peers periodically
-    Timer.periodic(const Duration(minutes: 1), (timer) {
-      if (!_isScanning) {
-        timer.cancel();
-        return;
-      }
-      _cleanupStalePeers();
-    });
-  }
-
   @override
   void dispose() {
     stopScanning();
     stopAdvertising();
+    _subscription?.cancel();
+    _dataSubscription?.cancel();
     _peers.clear();
-    _lastPeerUpdate.clear();
     super.dispose();
   }
 }
