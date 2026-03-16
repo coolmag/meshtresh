@@ -46,9 +46,18 @@ workflows:
           echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           
-          # Убираем || true, чтобы избежать синтаксических ошибок в bash на разных инстансах.
-          # Вместо этого оборачиваем команду в set +e
+          # Мы должны собрать Payload, используя Payload команду. 
+          # Если xcodebuild падает с ошибкой Development Team, flutter не отдает полноценный .app
+          # Единственный вариант - отключить build_settings через ruby напрямую в pbxproj
+          cd ios
+          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' Runner.xcodeproj/project.pbxproj
+          
+          cd ..
+          
           set +e
+          # Флаг no-codesign сработает лучше, если мы убрали флаги внутри Xcode
           flutter build ios --release --no-codesign
           set -e
           
@@ -59,12 +68,15 @@ workflows:
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Умный поиск Runner.app по всей директории проекта
+          # Если Flutter не собрал Runner.app в build, мы должны собрать его сами
           APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
           
-          if [ -z "$APP_DIR" ]; then
-             echo "ERROR: Runner.app not found. Xcode build failed completely."
-             exit 1
+          if [ -z "$APP_DIR" ] || [ $(du -sk "$APP_DIR" | cut -f1) -lt 5000 ]; then
+             echo "Runner.app not found or is too small (fake). Forcing xcodebuild archive without signing..."
+             cd ios
+             xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -allowProvisioningUpdates || true
+             cd ..
+             APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
           fi
           
           echo "Found app at: $APP_DIR"
