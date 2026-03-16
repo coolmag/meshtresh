@@ -12,7 +12,6 @@ workflows:
           rm -rf ios
           flutter create --platforms=ios --org com.coolmag .
           
-          # English strings to avoid locale/encoding issues in build
           plutil -insert NSBluetoothAlwaysUsageDescription -string "App needs Bluetooth to connect with nearby devices in Mesh network." ios/Runner/Info.plist
           plutil -insert NSBluetoothPeripheralUsageDescription -string "App needs Bluetooth to discover other devices." ios/Runner/Info.plist
           plutil -insert NSLocalNetworkUsageDescription -string "Local network is used for direct message transfer." ios/Runner/Info.plist
@@ -23,7 +22,6 @@ workflows:
           plutil -insert UIRequiresPersistentWiFi -bool true ios/Runner/Info.plist
           
           cd ios
-          # Правильный способ добавления макросов для permission_handler в Ruby (Podfile)
           sed -i '' "s/post_install do |installer|/post_install do |installer|\\
             installer.pods_project.targets.each do |target|\\
               target.build_configurations.each do |config|\\
@@ -38,29 +36,37 @@ workflows:
           flutter clean
           flutter pub get
           cd ios
-          # Очистка кеша CocoaPods
           rm -rf Pods Podfile.lock
           pod install --repo-update
           cd ..
 
       - name: Build Unsigned Release App
         script: |
-          # Отключаем подпись в конфигурации самого проекта Flutter, чтобы избежать ошибки Development Team
           echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Release.xcconfig
           echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           
-          # Используем ТОЛЬКО flutter build ios
-          # Флаг --no-codesign отключает подпись на уровне Flutter
-          # Добавляем || true, так как Xcode всё равно выдает ошибку в самом конце (хотя Runner.app уже собран)
-          flutter build ios --release --no-codesign || echo "Ignored code signing error"
+          # Убираем || true, чтобы избежать синтаксических ошибок в bash на разных инстансах.
+          # Вместо этого оборачиваем команду в set +e
+          set +e
+          flutter build ios --release --no-codesign
+          set -e
+          
+          echo "Finished Flutter build step."
 
       - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          APP_DIR=$(find build/ios/iphoneos -name "Runner.app" -type d | head -n 1)
+          # Умный поиск Runner.app по всей директории проекта
+          APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
+          
+          if [ -z "$APP_DIR" ]; then
+             echo "ERROR: Runner.app not found. Xcode build failed completely."
+             exit 1
+          fi
+          
           echo "Found app at: $APP_DIR"
           cp -r "$APP_DIR" build/ios/ipa/Payload/
           
