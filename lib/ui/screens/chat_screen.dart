@@ -6,8 +6,9 @@ import '../../core/services/mesh_network_service.dart';
 import '../../core/services/message_storage_service.dart';
 import '../../core/di/service_locator.dart';
 import '../widgets/message_bubble.dart';
+import '../theme/app_theme.dart';
 
-/// Chat screen for messaging with a specific peer
+/// Chat screen for messaging with a specific peer (Retro Terminal Style)
 class ChatScreen extends StatefulWidget {
   final String peerId;
   final String peerName;
@@ -53,6 +54,11 @@ class _ChatScreenState extends State<ChatScreen> {
     if (conversation != null) {
       _storageService.markConversationAsRead(conversation.id);
     }
+    
+    // Scroll to bottom after loading
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
   }
 
   void _setupMessageListener() {
@@ -134,8 +140,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 100), // Faster scroll for retro feel
+          curve: Curves.linear,
         );
       }
     });
@@ -148,16 +154,19 @@ class _ChatScreenState extends State<ChatScreen> {
     final isOnline = peer?.isAvailable ?? false;
 
     return Scaffold(
+      backgroundColor: AppTheme.terminalPureBlack,
       appBar: AppBar(
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.peerName),
+            Text('> ${widget.peerName.toUpperCase()}'),
             Text(
-              isOnline ? 'Online' : 'Offline',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: isOnline ? Colors.green : Colors.grey,
-                  ),
+              isOnline ? '[ LINK_ACTIVE ]' : '[ LINK_LOST ]',
+              style: TextStyle(
+                color: isOnline ? AppTheme.terminalGreen : AppTheme.errorColor,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -167,7 +176,6 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: () {
               _showPeerInfo(peer);
             },
-            tooltip: 'Peer Info',
           ),
         ],
       ),
@@ -177,17 +185,18 @@ class _ChatScreenState extends State<ChatScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(8),
-              color: Colors.orange.withOpacity(0.2),
-              child: Row(
+              color: AppTheme.errorColor,
+              child: const Row(
                 children: [
-                  Icon(Icons.warning_amber, color: Colors.orange[700], size: 20),
-                  const SizedBox(width: 8),
+                  Icon(Icons.warning, color: AppTheme.terminalPureBlack, size: 16),
+                  SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Peer is offline. Messages will be delivered when they come online.',
+                      'PEER OFFLINE. TX WILL QUEUE FOR RETRY.',
                       style: TextStyle(
-                        color: Colors.orange[900],
+                        color: AppTheme.terminalPureBlack,
                         fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
@@ -209,24 +218,26 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.chat_outlined,
+            const Icon(
+              Icons.terminal,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              color: AppTheme.terminalDarkGreen,
             ),
             const SizedBox(height: 16),
-            Text(
-              'No messages yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
+            const Text(
+              '> SECURE CHANNEL ESTABLISHED',
+              style: TextStyle(
+                color: AppTheme.terminalDarkGreen,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Start the conversation!',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                  ),
+              'AWAITING INPUT...',
+              style: TextStyle(
+                color: AppTheme.terminalDarkGreen.withOpacity(0.5),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -255,26 +266,26 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageInput() {
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: AppTheme.terminalBlack,
+        border: Border(top: BorderSide(color: AppTheme.terminalGreen, width: 2)),
       ),
       child: Row(
         children: [
+          const Text('> ', style: TextStyle(color: AppTheme.terminalGreen, fontWeight: FontWeight.bold, fontSize: 18)),
           Expanded(
             child: TextField(
               controller: _messageController,
+              style: const TextStyle(color: AppTheme.terminalGreen, fontFamily: 'Courier', fontWeight: FontWeight.bold),
               decoration: const InputDecoration(
-                hintText: 'Type a message...',
-                border: OutlineInputBorder(),
+                hintText: 'ENTER TX...',
+                hintStyle: TextStyle(color: AppTheme.terminalDarkGreen),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: 8,
                   vertical: 12,
                 ),
               ),
@@ -283,11 +294,10 @@ class _ChatScreenState extends State<ChatScreen> {
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          const SizedBox(width: 8),
-          IconButton.filled(
+          IconButton(
             onPressed: _sendMessage,
             icon: const Icon(Icons.send),
-            tooltip: 'Send',
+            color: AppTheme.terminalGreen,
           ),
         ],
       ),
@@ -298,24 +308,26 @@ class _ChatScreenState extends State<ChatScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(widget.peerName),
+        backgroundColor: AppTheme.terminalPureBlack,
+        shape: Border.all(color: AppTheme.terminalGreen, width: 2),
+        title: Text('> SYS_INFO: ${widget.peerName.toUpperCase()}', style: const TextStyle(color: AppTheme.terminalGreen)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _infoRow('ID', widget.peerId),
-            _infoRow('Status', peer?.status.name ?? 'Unknown'),
-            _infoRow('Device', peer?.deviceType ?? 'Unknown'),
+            _infoRow('STAT', peer?.status.name.toUpperCase() ?? 'UNKNOWN'),
+            _infoRow('TYPE', peer?.deviceType.toUpperCase() ?? 'UNKNOWN'),
             if (peer != null) ...[
-              _infoRow('Signal', '${peer.connectionQuality}%'),
-              _infoRow('Messages', '${_messages.length}'),
+              _infoRow('SIG', '${peer.connectionQuality}%'),
+              _infoRow('TX/RX', '${_messages.length} PACKETS'),
             ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('[ CLOSE ]', style: TextStyle(color: AppTheme.terminalGreen)),
           ),
         ],
       ),
@@ -329,12 +341,12 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Text(
             '$label: ',
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            style: const TextStyle(color: AppTheme.terminalDarkGreen, fontWeight: FontWeight.bold),
           ),
           Expanded(
             child: Text(
               value,
-              style: TextStyle(color: Colors.grey[700]),
+              style: const TextStyle(color: AppTheme.terminalGreen, fontWeight: FontWeight.bold),
             ),
           ),
         ],

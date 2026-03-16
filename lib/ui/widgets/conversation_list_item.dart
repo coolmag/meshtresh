@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/models/conversation.dart';
+import '../theme/app_theme.dart';
 
-/// A list item showing a conversation preview
+/// A list item showing a conversation preview (Retro Terminal Style)
 class ConversationListItem extends StatelessWidget {
   final Conversation conversation;
   final VoidCallback onTap;
@@ -15,80 +16,88 @@ class ConversationListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final hasUnread = conversation.unreadCount > 0;
+    final color = hasUnread ? AppTheme.terminalGreen : AppTheme.terminalDarkGreen;
 
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: theme.colorScheme.primaryContainer,
-        child: Text(
-          conversation.peerName[0].toUpperCase(),
-          style: TextStyle(
-            color: theme.colorScheme.onPrimaryContainer,
-            fontWeight: FontWeight.bold,
-          ),
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: AppTheme.terminalDarkGreen, width: 1),
         ),
       ),
-      title: Row(
-        children: [
-          Expanded(
-            child: Text(
-              conversation.peerName,
-              style: TextStyle(
-                fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            border: Border.all(color: color, width: 2),
           ),
-          if (conversation.isPinned)
-            const Icon(Icons.push_pin, size: 16, color: Colors.grey),
-        ],
-      ),
-      subtitle: Text(
-        conversation.lastMessagePreview,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          fontWeight: hasUnread ? FontWeight.w500 : FontWeight.normal,
-          color: hasUnread
-              ? theme.colorScheme.onSurface
-              : theme.colorScheme.onSurface.withOpacity(0.6),
-        ),
-      ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Text(
-            _formatTime(conversation.lastMessageTime),
+          alignment: Alignment.center,
+          child: Text(
+            conversation.peerName.substring(0, 1).toUpperCase(),
             style: TextStyle(
-              fontSize: 12,
-              color: hasUnread
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface.withOpacity(0.6),
-              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
             ),
           ),
-          if (hasUnread) ...[
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary,
-                borderRadius: BorderRadius.circular(10),
-              ),
+        ),
+        title: Row(
+          children: [
+            Expanded(
               child: Text(
-                '${conversation.unreadCount}',
+                '> ${conversation.peerName.toUpperCase()}',
                 style: TextStyle(
-                  color: theme.colorScheme.onPrimary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
+            if (conversation.isPinned)
+              const Icon(Icons.push_pin, size: 16, color: AppTheme.terminalDarkGreen),
           ],
-        ],
+        ),
+        subtitle: Text(
+          conversation.lastMessagePreview,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+            color: color,
+          ),
+        ),
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _formatTime(conversation.lastMessageTime),
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            if (hasUnread) ...[
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                color: color,
+                child: Text(
+                  '${conversation.unreadCount} NEW',
+                  style: const TextStyle(
+                    color: AppTheme.terminalPureBlack,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        onTap: onTap,
       ),
-      onTap: onTap,
     );
   }
 
@@ -99,11 +108,11 @@ class ConversationListItem extends StatelessWidget {
     if (difference.inDays == 0) {
       return DateFormat('HH:mm').format(timestamp);
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return 'YDAY';
     } else if (difference.inDays < 7) {
-      return DateFormat('EEE').format(timestamp);
+      return DateFormat('EEE').format(timestamp).toUpperCase();
     } else {
-      return DateFormat('MMM d').format(timestamp);
+      return DateFormat('dd/MM').format(timestamp);
     }
   }
 }

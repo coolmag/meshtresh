@@ -27,8 +27,7 @@ class CrisisMeshApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Crisis Mesh',
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        theme: AppTheme.darkTheme,
         home: const HomeScreen(),
         debugShowCheckedModeBanner: false,
       ),

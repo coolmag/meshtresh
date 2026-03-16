@@ -6,12 +6,13 @@ import '../../core/services/emergency_service.dart';
 import '../../core/di/service_locator.dart';
 import '../widgets/conversation_list_item.dart';
 import '../widgets/network_status_banner.dart';
+import '../theme/app_theme.dart';
 import 'chat_screen.dart';
 import 'network_status_screen.dart';
 import 'emergency_alerts_screen.dart';
 import 'sos_screen.dart';
 
-/// Main screen showing conversation list
+/// Main screen showing conversation list (Retro Terminal Style)
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -30,15 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _initializeMeshNetwork() async {
     final meshService = context.read<MeshNetworkService>();
-    
-    // Initialize with device info
-    // TODO: Get real device ID and name
     final deviceId = 'user_${DateTime.now().millisecondsSinceEpoch}';
-    const deviceName = 'My Device'; // TODO: Let user set this
+    const deviceName = 'OPERATOR'; // Retro default name
     
     await meshService.initialize(deviceId, deviceName);
-    
-    // Start scanning and advertising
     await meshService.startScanning();
     await meshService.startAdvertising();
   }
@@ -46,17 +42,20 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.terminalPureBlack,
       appBar: AppBar(
-        title: const Text('Crisis Mesh'),
+        title: const Text('[CRISIS_MESH_OS]'),
         actions: [
           // Emergency alerts button with badge
           Consumer<EmergencyService>(
             builder: (context, emergencyService, child) {
               final criticalCount = emergencyService.criticalSignalsCount;
               return Stack(
+                alignment: Alignment.center,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.warning_amber_rounded),
+                    color: criticalCount > 0 ? AppTheme.errorColor : AppTheme.terminalGreen,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -65,30 +64,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    tooltip: 'Emergency Alerts',
                   ),
                   if (criticalCount > 0)
                     Positioned(
                       right: 8,
                       top: 8,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
+                        padding: const EdgeInsets.all(2),
+                        color: AppTheme.errorColor,
                         child: Text(
                           '$criticalCount',
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppTheme.terminalPureBlack,
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -97,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline),
+            icon: const Icon(Icons.radar),
             onPressed: () {
               Navigator.push(
                 context,
@@ -106,24 +96,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               );
             },
-            tooltip: 'Network Status',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              // TODO: Navigate to settings
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Settings coming soon')),
-              );
-            },
-            tooltip: 'Settings',
           ),
         ],
       ),
       body: Column(
         children: [
           const NetworkStatusBanner(),
-          // SOS Quick Access Banner
           _buildSOSBanner(),
           Expanded(
             child: _buildConversationList(),
@@ -132,27 +110,21 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewConversationDialog,
-        icon: const Icon(Icons.message),
-        label: const Text('New Message'),
+        icon: const Icon(Icons.add_box),
+        label: const Text('INIT COMM'),
+        backgroundColor: AppTheme.terminalGreen,
+        foregroundColor: AppTheme.terminalPureBlack,
+        shape: const BeveledRectangleBorder(),
       ),
     );
   }
 
   Widget _buildSOSBanner() {
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.red.shade700, Colors.red.shade900],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: AppTheme.terminalPureBlack,
+        border: Border.all(color: AppTheme.errorColor, width: 2),
       ),
       child: Material(
         color: Colors.transparent,
@@ -163,29 +135,14 @@ class _HomeScreenState extends State<HomeScreen> {
               MaterialPageRoute(builder: (_) => SOSScreen()),
             );
           },
-          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.emergency,
-                    color: Colors.red,
-                    size: 32,
-                  ),
+                const Icon(
+                  Icons.crisis_alert,
+                  color: AppTheme.errorColor,
+                  size: 28,
                 ),
                 const SizedBox(width: 16),
                 const Expanded(
@@ -193,28 +150,29 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Emergency SOS',
+                        '!!! BROADCAST SOS !!!',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                          color: AppTheme.errorColor,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: 2.0,
                         ),
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'Tap for immediate help',
+                        '> TAP TO TRANSMIT EMERGENCY SIGNAL',
                         style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
+                          color: AppTheme.errorColor,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
-                  color: Colors.white,
-                  size: 20,
+                  color: AppTheme.errorColor.withOpacity(0.5),
+                  size: 16,
                 ),
               ],
             ),
@@ -233,23 +191,27 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.chat_bubble_outline,
+              Icons.memory,
               size: 64,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+              color: AppTheme.terminalDarkGreen,
             ),
             const SizedBox(height: 16),
-            Text(
-              'No conversations yet',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  ),
+            const Text(
+              '> COMM_LOG EMPTY',
+              style: TextStyle(
+                color: AppTheme.terminalDarkGreen,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 2.0,
+              ),
             ),
             const SizedBox(height: 8),
             Text(
-              'Tap the button below to start messaging',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                  ),
+              'AWAITING INCOMING TRANSMISSION...',
+              style: TextStyle(
+                color: AppTheme.terminalDarkGreen.withOpacity(0.5),
+                fontSize: 12,
+              ),
             ),
           ],
         ),
@@ -284,9 +246,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (peers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No nearby devices found. Make sure both devices have the app open.'),
-          duration: Duration(seconds: 3),
+        SnackBar(
+          content: const Text('> ERROR: NO RECEIVERS IN RANGE'),
+          backgroundColor: AppTheme.terminalBlack,
+          behavior: SnackBarBehavior.floating,
+          shape: Border.all(color: AppTheme.terminalGreen, width: 1),
         ),
       );
       return;
@@ -295,7 +259,9 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Start Conversation'),
+        backgroundColor: AppTheme.terminalPureBlack,
+        shape: Border.all(color: AppTheme.terminalGreen, width: 2),
+        title: const Text('> SELECT RECEIVER', style: TextStyle(color: AppTheme.terminalGreen)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -303,29 +269,42 @@ class _HomeScreenState extends State<HomeScreen> {
             itemCount: peers.length,
             itemBuilder: (context, index) {
               final peer = peers[index];
-              return ListTile(
-                leading: CircleAvatar(
-                  child: Text(peer.name[0].toUpperCase()),
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppTheme.terminalDarkGreen, width: 1),
                 ),
-                title: Text(peer.name),
-                subtitle: Text(peer.status.name),
-                trailing: Icon(
-                  peer.isAvailable ? Icons.circle : Icons.circle_outlined,
-                  color: peer.isAvailable ? Colors.green : Colors.grey,
-                  size: 12,
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ChatScreen(
-                        peerId: peer.id,
-                        peerName: peer.name,
+                child: ListTile(
+                  leading: Text(
+                    '[${peer.name.substring(0, 1).toUpperCase()}]',
+                    style: const TextStyle(color: AppTheme.terminalGreen, fontWeight: FontWeight.bold),
+                  ),
+                  title: Text(
+                    peer.name.toUpperCase(),
+                    style: const TextStyle(color: AppTheme.terminalGreen),
+                  ),
+                  subtitle: Text(
+                    '> ${peer.status.name.toUpperCase()}',
+                    style: const TextStyle(color: AppTheme.terminalDarkGreen, fontSize: 10),
+                  ),
+                  trailing: Icon(
+                    peer.isAvailable ? Icons.adjust : Icons.block,
+                    color: peer.isAvailable ? AppTheme.terminalGreen : AppTheme.terminalDarkGreen,
+                    size: 16,
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ChatScreen(
+                          peerId: peer.id,
+                          peerName: peer.name,
+                        ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               );
             },
           ),
@@ -333,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('[ ABORT ]', style: TextStyle(color: AppTheme.terminalGreen)),
           ),
         ],
       ),
