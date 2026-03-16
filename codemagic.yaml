@@ -13,8 +13,7 @@ workflows:
           flutter create --platforms=ios --org com.coolmag .
           flutter pub get
           
-          # Умная правка Podfile: интегрируемся в существующий post_install
-          # Мы заменяем стандартную заглушку на нашу логику установки версии 13.0
+          # Умная правка Podfile для совместимости с iOS 13
           cd ios
           sed -i '' "s/post_install do |installer|/post_install do |installer|\\
             installer.pods_project.targets.each do |target|\\
@@ -23,18 +22,25 @@ workflows:
               end\\
             end/g" Podfile
           
+          # Добавляем разрешения в Info.plist для iOS
+          plutil -insert NSBluetoothAlwaysUsageDescription -string "Приложению нужен Bluetooth для связи в Mesh-сети без интернета." Runner/Info.plist
+          plutil -insert NSBluetoothPeripheralUsageDescription -string "Приложению нужен Bluetooth для поиска других устройств." Runner/Info.plist
+          plutil -insert NSLocalNetworkUsageDescription -string "Локальная сеть используется для прямой передачи сообщений." Runner/Info.plist
+          plutil -insert NSLocationWhenInUseUsageDescription -string "Локация нужна для работы Nearby Connections." Runner/Info.plist
+          
           pod install
           cd ..
 
-      - name: Build Unsigned Debug App
+      - name: Build Unsigned Release App
         script: |
-          # Собираем DEBUG для iphoneos
-          flutter build ios --debug --no-codesign
+          # Собираем RELEASE для iphoneos (решает проблему белого экрана JIT)
+          flutter build ios --release --no-codesign
 
       - name: Package IPA
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
+          # В release сборке путь немного другой, чем в debug
           cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
           cd build/ios/ipa
           zip -r Runner.ipa Payload
