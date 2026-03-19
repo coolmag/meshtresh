@@ -29,6 +29,8 @@ workflows:
                 config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['\$(inherited)', 'PERMISSION_CAMERA=1', 'PERMISSION_PHOTOS=1', 'PERMISSION_LOCATION=1', 'PERMISSION_BLUETOOTH=1']\\
                 config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'\\
                 config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'\\
+                config.build_settings['SWIFT_COMPILATION_MODE'] = 'singlefile'\\
+                config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '-Onone'\\
               end\\
             end/g" Podfile
 
