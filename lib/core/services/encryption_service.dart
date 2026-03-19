@@ -1,9 +1,10 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'package:logger/logger.dart';
 
-/// Service responsible for End-to-End Encryption (E2EE) of mesh messages
+/// Service responsible for end-to-end encryption of messages
 class EncryptionService {
   final _logger = Logger();
 
