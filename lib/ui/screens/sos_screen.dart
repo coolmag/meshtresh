@@ -85,7 +85,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
       setState(() => _isSending = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send SOS: $e')),
+          SnackBar(content: Text('Не удалось отправить SOS: $e')),
         );
       }
     }
@@ -121,17 +121,17 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
       context: context,
       builder: (context) => AlertDialog(
         icon: const Icon(Icons.check_circle, color: Colors.green, size: 64),
-        title: const Text('SOS Sent!'),
+        title: const Text('SOS отправлен!'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Your emergency signal is broadcasting to all nearby devices',
+              'Ваш экстренный сигнал транслируется на все соседние устройства',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             Text(
-              'Keep your device on to continue broadcasting',
+              'Держите устройство включенным для продолжения трансляции',
               style: Theme.of(context).textTheme.bodySmall,
               textAlign: TextAlign.center,
             ),
@@ -140,7 +140,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('ОК'),
           ),
         ],
       ),
@@ -153,7 +153,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Emergency SOS'),
+        title: const Text('Экстренный сигнал SOS'),
         backgroundColor: Colors.red.shade700,
         foregroundColor: Colors.white,
       ),
@@ -206,7 +206,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
                     ),
                     const SizedBox(height: 24),
                     const Text(
-                      'Emergency Signal',
+                      'Экстренный сигнал',
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -215,7 +215,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Select emergency type and send signal',
+                      'Выберите тип экстренной ситуации и отправьте сигнал',
                       style: TextStyle(
                         fontSize: 16,
                         color: Colors.white.withOpacity(0.9),
@@ -240,7 +240,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
                             children: [
                               CircularProgressIndicator(),
                               SizedBox(height: 16),
-                              Text('Broadcasting emergency signal...'),
+                              Text('Трансляция экстренного сигнала...'),
                             ],
                           ),
                         )
@@ -263,88 +263,88 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'What kind of help do you need?',
+            'Какая помощь вам нужна?',
             style: theme.textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
           
           // Critical emergencies
-          _buildSectionHeader('Critical - Immediate Help'),
+          _buildSectionHeader('Критическая - Немедленная помощь'),
           _buildEmergencyButton(
             type: SignalType.sos,
             icon: '🆘',
-            title: 'SOS - General Emergency',
-            description: 'Need immediate help',
+            title: 'SOS - Общая экстренная ситуация',
+            description: 'Нужна немедленная помощь',
             color: Colors.red,
           ),
           _buildEmergencyButton(
             type: SignalType.medical,
             icon: '🏥',
-            title: 'Medical Emergency',
-            description: 'Need medical assistance',
+            title: 'Медицинская помощь',
+            description: 'Нужна медицинская помощь',
             color: Colors.red,
           ),
           _buildEmergencyButton(
             type: SignalType.trapped,
             icon: '🚧',
-            title: 'Trapped',
-            description: 'Physically trapped, need rescue',
+            title: 'Заблокирован',
+            description: 'Физически заблокирован, нужно спасение',
             color: Colors.red,
           ),
           _buildEmergencyButton(
             type: SignalType.danger,
             icon: '⚠️',
-            title: 'Immediate Danger',
-            description: 'In danger right now',
+            title: 'Непосредственная опасность',
+            description: 'В опасности прямо сейчас',
             color: Colors.red,
           ),
 
           const SizedBox(height: 24),
-          _buildSectionHeader('Need Resources'),
+          _buildSectionHeader('Нужны ресурсы'),
           _buildEmergencyButton(
             type: SignalType.needWater,
             icon: '💧',
-            title: 'Need Water',
-            description: 'Urgent need for water',
+            title: 'Нужна вода',
+            description: 'Срочно нужна вода',
             color: Colors.orange,
           ),
           _buildEmergencyButton(
             type: SignalType.needFood,
             icon: '🍞',
-            title: 'Need Food',
-            description: 'Need food supplies',
+            title: 'Нужна еда',
+            description: 'Нужны запасы еды',
             color: Colors.orange,
           ),
           _buildEmergencyButton(
             type: SignalType.needMedication,
             icon: '💊',
-            title: 'Need Medication',
-            description: 'Need medical supplies',
+            title: 'Нужны медикаменты',
+            description: 'Нужны медицинские средства',
             color: Colors.orange,
           ),
           _buildEmergencyButton(
             type: SignalType.needShelter,
             icon: '🏠',
-            title: 'Need Shelter',
-            description: 'Need safe place to stay',
+            title: 'Нужно укрытие',
+            description: 'Нужно безопасное место для ночлега',
             color: Colors.orange,
           ),
 
           const SizedBox(height: 24),
-          _buildSectionHeader('Status Updates'),
+          _buildSectionHeader('Обновления статуса'),
           _buildEmergencyButton(
             type: SignalType.safe,
             icon: '✅',
-            title: 'I\'m Safe',
-            description: 'Check-in - Everything OK',
+            title: 'Я в безопасности',
+            description: 'Проверка статуса - Все в порядке',
             color: Colors.green,
           ),
           _buildEmergencyButton(
             type: SignalType.foundSurvivor,
             icon: '👤',
-            title: 'Found Survivor',
-            description: 'Located person needing help',
+            title: 'Найден выживший',
+            description: 'Найден человек, нуждающийся в помощи',
             color: Colors.blue,
           ),
 
@@ -364,7 +364,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
                 elevation: 8,
               ),
               child: const Text(
-                'SEND SOS SIGNAL',
+                'ОТПРАВИТЬ СИГНАЛ SOS',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -481,7 +481,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
           ),
           const SizedBox(height: 24),
           const Text(
-            'SOS Signal Active',
+            'Сигнал SOS активен',
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -489,13 +489,13 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
           ),
           const SizedBox(height: 16),
           Text(
-            'Broadcasting: ${_lastSignal!.getDescription()}',
+            'Трансляция: ${_lastSignal!.getDescription()}',
             textAlign: TextAlign.center,
             style: const TextStyle(fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
-            'Signal sent ${_formatTimestamp(_lastSignal!.timestamp)}',
+            'Сигнал отправлен ${_formatTimestamp(_lastSignal!.timestamp)}',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey.shade600,
@@ -514,13 +514,13 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
                 const Icon(Icons.info_outline, color: Colors.green),
                 const SizedBox(height: 8),
                 const Text(
-                  'Your signal is being relayed through the mesh network',
+                  'Ваш сигнал передается через mesh-сеть',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Keep your device on and nearby devices will help relay your message',
+                  'Держите устройство включенным, и соседние устройства помогут передать ваше сообщение',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 12,
@@ -539,7 +539,7 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
               });
             },
             icon: const Icon(Icons.refresh),
-            label: const Text('Send Another Signal'),
+            label: const Text('Отправить другой сигнал'),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             ),
@@ -554,11 +554,11 @@ class _SOSScreenState extends State<SOSScreen> with SingleTickerProviderStateMix
     final difference = now.difference(timestamp);
     
     if (difference.inSeconds < 60) {
-      return '${difference.inSeconds} seconds ago';
+      return '${difference.inSeconds} секунд назад';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} minutes ago';
+      return '${difference.inMinutes} минут назад';
     } else {
-      return '${difference.inHours} hours ago';
+      return '${difference.inHours} часов назад';
     }
   }
 }

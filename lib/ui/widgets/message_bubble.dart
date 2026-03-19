@@ -59,7 +59,7 @@ class MessageBubble extends StatelessWidget {
                   if (message.hopCount > 0) ...[
                     const SizedBox(width: 4),
                     Text(
-                      '[HOPS:${message.hopCount}]',
+                      '[ПРЫЖКИ:${message.hopCount}]',
                       style: const TextStyle(
                         color: AppTheme.terminalDarkGreen,
                         fontSize: 10,
@@ -86,7 +86,7 @@ class MessageBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '> TARGET COORDINATES RECEIVED:',
+            '> ЦЕЛЕВЫЕ КООРДИНАТЫ ПОЛУЧЕНЫ:',
             style: TextStyle(
               color: AppTheme.terminalGreen,
               fontWeight: FontWeight.bold,
@@ -121,7 +121,7 @@ class MessageBubble extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '> VISUAL DATA DECODED:',
+              '> ВИЗУАЛЬНЫЕ ДАННЫЕ РАСКОДИРОВАНЫ:',
               style: TextStyle(
                 color: AppTheme.terminalGreen,
                 fontWeight: FontWeight.bold,
@@ -141,7 +141,7 @@ class MessageBubble extends StatelessWidget {
           ],
         );
       } catch (e) {
-        return const Text('> [ERROR DECODING VISUAL DATA]', style: TextStyle(color: AppTheme.errorColor));
+        return const Text('> [ОШИБКА РАСКОДИРОВАНИЯ ВИЗУАЛЬНЫХ ДАННЫХ]', style: TextStyle(color: AppTheme.errorColor));
       }
     }
 

@@ -18,14 +18,14 @@ class NetworkStatusBanner extends StatelessWidget {
     String message;
 
     if (onlineCount > 0) {
-      statusStr = "[ CONNECTED ]";
-      message = '> $onlineCount PEER(S) LINKED';
+      statusStr = "[ ПОДКЛЮЧЕНО ]";
+      message = '> $onlineCount УЗЕЛ(ОВ) СВЯЗАНО';
     } else if (peerCount > 0) {
-      statusStr = "[ DETECTING ]";
-      message = '> $peerCount SIGNAL(S) IN RANGE';
+      statusStr = "[ ОБНАРУЖЕНИЕ ]";
+      message = '> $peerCount СИГНАЛ(ОВ) В ЗОНЕ';
     } else {
-      statusStr = "[ SCANNING ]";
-      message = '> NO LOCAL SIGNALS';
+      statusStr = "[ СКАНИРОВАНИЕ ]";
+      message = '> НЕТ ЛОКАЛЬНЫХ СИГНАЛОВ';
     }
 
     return Container(
@@ -47,7 +47,7 @@ class NetworkStatusBanner extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'NETWORK STATUS:',
+                'СТАТУС СЕТИ:',
                 style: TextStyle(
                   color: AppTheme.terminalDarkGreen,
                   fontWeight: FontWeight.bold,

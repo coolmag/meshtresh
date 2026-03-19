@@ -12,29 +12,29 @@ class NetworkStatusScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Network Status'),
+        title: const Text('Статус сети'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           _buildStatusCard(
             context,
-            'Network Status',
+            'Статус сети',
             [
-              _statusRow('Scanning', meshService.isScanning ? 'Active' : 'Inactive'),
-              _statusRow('Advertising', meshService.isAdvertising ? 'Active' : 'Inactive'),
-              _statusRow('Device ID', meshService.deviceId ?? 'Not set'),
-              _statusRow('Device Name', meshService.deviceName ?? 'Not set'),
+              _statusRow('Сканирование', meshService.isScanning ? 'Активно' : 'Неактивно'),
+              _statusRow('Вещание', meshService.isAdvertising ? 'Активно' : 'Неактивно'),
+              _statusRow('ID устройства', meshService.deviceId ?? 'Не задано'),
+              _statusRow('Имя устройства', meshService.deviceName ?? 'Не задано'),
             ],
           ),
           const SizedBox(height: 16),
           _buildStatusCard(
             context,
-            'Connected Peers',
+            'Подключенные узлы',
             [
-              _statusRow('Total Peers', '${meshService.peers.length}'),
-              _statusRow('Online', '${meshService.onlinePeers.length}'),
-              _statusRow('Nearby', '${meshService.peers.where((p) => p.status.name == 'nearby').length}'),
+              _statusRow('Всего узлов', '${meshService.peers.length}'),
+              _statusRow('В сети', '${meshService.onlinePeers.length}'),
+              _statusRow('Поблизости', '${meshService.peers.where((p) => p.status.name == 'nearby').length}'),
             ],
           ),
           const SizedBox(height: 16),
@@ -96,7 +96,7 @@ class NetworkStatusScreen extends StatelessWidget {
                 Icon(Icons.devices_other, size: 48, color: Colors.grey),
                 SizedBox(height: 16),
                 Text(
-                  'No peers discovered yet',
+                  'Узлы пока не обнаружены',
                   style: TextStyle(color: Colors.grey),
                 ),
               ],
@@ -113,7 +113,7 @@ class NetworkStatusScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              'Discovered Peers',
+              'Обнаруженные узлы',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -143,7 +143,7 @@ class NetworkStatusScreen extends StatelessWidget {
                     Text('${peer.deviceType} • ${peer.status.name}'),
                     if (peer.signalStrength != 0)
                       Text(
-                        'Signal: ${peer.connectionQuality}%',
+                        'Сигнал: ${peer.connectionQuality}%',
                         style: const TextStyle(fontSize: 12),
                       ),
                   ],

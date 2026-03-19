@@ -85,7 +85,7 @@ class ConversationListItem extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 color: color,
                 child: Text(
-                  '${conversation.unreadCount} NEW',
+                  '${conversation.unreadCount} НОВЫХ',
                   style: const TextStyle(
                     color: AppTheme.terminalPureBlack,
                     fontSize: 10,
@@ -108,7 +108,7 @@ class ConversationListItem extends StatelessWidget {
     if (difference.inDays == 0) {
       return DateFormat('HH:mm').format(timestamp);
     } else if (difference.inDays == 1) {
-      return 'YDAY';
+      return 'ВЧЕРА';
     } else if (difference.inDays < 7) {
       return DateFormat('EEE').format(timestamp).toUpperCase();
     } else {

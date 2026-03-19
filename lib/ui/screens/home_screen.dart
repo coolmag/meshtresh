@@ -111,7 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showNewConversationDialog,
         icon: const Icon(Icons.add_box),
-        label: const Text('INIT COMM'),
+        label: const Text('НАЧАТЬ СВЯЗЬ'),
         backgroundColor: AppTheme.terminalGreen,
         foregroundColor: AppTheme.terminalPureBlack,
         shape: const BeveledRectangleBorder(),
@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '!!! BROADCAST SOS !!!',
+                        '!!! ОТПРАВИТЬ SOS !!!',
                         style: TextStyle(
                           color: AppTheme.errorColor,
                           fontSize: 18,
@@ -160,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        '> TAP TO TRANSMIT EMERGENCY SIGNAL',
+                        '> НАЖМИТЕ ДЛЯ ПЕРЕДАЧИ ЭКСТРЕННОГО СИГНАЛА',
                         style: TextStyle(
                           color: AppTheme.errorColor,
                           fontSize: 12,
@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '> COMM_LOG EMPTY',
+              '> ЖУРНАЛ_СВЯЗИ ПУСТ',
               style: TextStyle(
                 color: AppTheme.terminalDarkGreen,
                 fontSize: 16,
@@ -207,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'AWAITING INCOMING TRANSMISSION...',
+              'ОЖИДАНИЕ ВХОДЯЩЕЙ ПЕРЕДАЧИ...',
               style: TextStyle(
                 color: AppTheme.terminalDarkGreen.withOpacity(0.5),
                 fontSize: 12,
@@ -247,7 +247,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (peers.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('> ERROR: NO RECEIVERS IN RANGE'),
+          content: const Text('> ОШИБКА: НЕТ ПРИЕМНИКОВ В ЗОНЕ ДОСЯГАЕМОСТИ'),
           backgroundColor: AppTheme.terminalBlack,
           behavior: SnackBarBehavior.floating,
           shape: Border.all(color: AppTheme.terminalGreen, width: 1),
@@ -261,7 +261,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.terminalPureBlack,
         shape: Border.all(color: AppTheme.terminalGreen, width: 2),
-        title: const Text('> SELECT RECEIVER', style: TextStyle(color: AppTheme.terminalGreen)),
+        title: const Text('> ВЫБЕРИТЕ ПРИЕМНИК', style: TextStyle(color: AppTheme.terminalGreen)),
         content: SizedBox(
           width: double.maxFinite,
           child: ListView.builder(
@@ -312,7 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('[ ABORT ]', style: TextStyle(color: AppTheme.terminalGreen)),
+            child: const Text('[ ОТМЕНА ]', style: TextStyle(color: AppTheme.terminalGreen)),
           ),
         ],
       ),

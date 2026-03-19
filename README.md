@@ -1,90 +1,47 @@
 # Crisis Mesh Messenger
 
-A decentralized, infrastructure-free messaging application for crisis situations.
+Децентрализованный мессенджер для экстренных ситуаций, не требующий инфраструктуры связи. Выполнен в стиле ретро-терминала / тактического радио (в духе Meshtastic).
 
-## Overview
+## Обзор
 
-Crisis Mesh Messenger enables people to communicate when traditional infrastructure (internet, cell towers) fails due to:
-- Natural disasters
-- War and conflict
-- Censorship
-- Remote locations
+Crisis Mesh Messenger позволяет людям общаться, когда традиционная инфраструктура (интернет, сотовые вышки) выходит из строя из-за:
+- Стихийных бедствий
+- Военных конфликтов
+- Цензуры и полных блокировок
+- Нахождения в удаленных районах (горы, лес, море)
 
-Messages hop from device to device using Bluetooth and WiFi Direct, creating a resilient mesh network that requires no central infrastructure.
+Сообщения передаются от устройства к устройству (P2P Mesh-сеть) с использованием встроенных модулей Bluetooth и WiFi Direct, создавая отказоустойчивую сеть без единого центрального сервера.
 
-## Key Features
+## Ключевые возможности
 
-- ✅ No internet or cell towers required
-- ✅ Device-to-device messaging (Bluetooth/WiFi)
-- ✅ End-to-end encryption
-- ✅ Store-and-forward routing
-- ✅ Works on Android and iOS
-- ✅ Free and open source
+- ✅ **Не нужен интернет и сотовая связь** (прямое подключение устройств).
+- ✅ **Ретро-интерфейс** (черно-зеленый терминальный стиль).
+- ✅ **Отправка фото** (автоматическое умное сжатие для передачи по медленным каналам связи Bluetooth).
+- ✅ **Отправка геолокации** в один клик.
+- ✅ **Система экстренных оповещений (SOS)** с градацией по типам (Медицина, Заблокирован, Опасность) и уровням угрозы.
+- ✅ **Полная локализация на русский язык**.
+- ✅ **Кроссплатформенность** (Android и iOS). Настроен пайплайн сборки для установки на iOS без платного аккаунта разработчика через Sideloadly.
 
-## Quick Start
+## Быстрый старт (Сборка)
 
 ```bash
-# Install dependencies
+# Установка зависимостей
 flutter pub get
 
-# Run on Android
-flutter run
+# Сборка приложения для Android (.apk)
+flutter build apk --release
 
-# Run on iOS
-flutter run -d iPhone
+# Сборка для iOS
+# В репозитории лежит скрипт `codemagic.yaml` с инъекциями макросов для обхода 
+# системы подписей Apple. Просто подключите репозиторий к Codemagic, и он выдаст 
+# готовый .ipa файл для установки через Sideloadly (Normal Install).
 ```
 
-## Architecture
+## Архитектура и стек
+- **UI/Фреймворк:** Flutter 3.29+
+- **Сетевой слой:** `flutter_nearby_connections` (Google Nearby Connections API)
+- **Хранилище данных:** Hive (локальная NoSQL база)
+- **State Management:** Provider + GetIt
 
-### Technology Stack
-- **Framework:** Flutter 3.29+
-- **State Management:** Provider + GetIt (MVVM)
-- **Local Storage:** Hive (encrypted)
-- **Communication:** 
-  - Android: Nearby Connections API, WiFi Direct, Bluetooth LE
-  - iOS: Multipeer Connectivity, Bluetooth LE
-- **Encryption:** End-to-end using libsodium
-
-### Project Structure
-
-```
-lib/
-├── core/
-│   ├── di/              # Dependency injection setup
-│   ├── models/          # Data models
-│   ├── services/        # Business logic services
-│   └── utils/           # Utilities and constants
-├── features/
-│   ├── messaging/       # Chat and conversations
-│   ├── network/         # Mesh network management
-│   └── settings/        # App settings
-├── ui/
-│   ├── screens/         # Screen widgets
-│   ├── widgets/         # Reusable widgets
-│   └── theme/           # App theming
-└── main.dart
-```
-
-## Development Status
-
-### Phase 1: Proof of Concept ✅ READY TO RUN
-- [x] Project structure
-- [x] Basic UI (Home, Chat, Network Status screens)
-- [x] UI components (message bubbles, conversation list)
-- [x] Local storage (Hive with models)
-- [x] Service architecture (MVVM with Provider/GetIt)
-- [x] Platform configurations (Android & iOS)
-- [x] Simulated peer discovery
-- [ ] Real Bluetooth/WiFi networking (Next phase)
-
-## License
-
-MIT License - Free for humanitarian use
-
-## Contributing
-
-This is a humanitarian project. Contributions welcome!
-
-## Contact
-
-For collaboration or questions, see documentation in `/docs`.
+## Лицензия
+MIT License - Бесплатно для гуманитарного использования.

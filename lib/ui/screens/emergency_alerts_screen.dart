@@ -14,7 +14,7 @@ class EmergencyAlertsScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Emergency Alerts'),
+          title: const Text('Экстренные оповещения'),
           backgroundColor: Colors.red.shade700,
           foregroundColor: Colors.white,
           bottom: const TabBar(
@@ -22,8 +22,8 @@ class EmergencyAlertsScreen extends StatelessWidget {
             labelColor: Colors.white,
             unselectedLabelColor: Colors.white70,
             tabs: [
-              Tab(icon: Icon(Icons.warning), text: 'Active'),
-              Tab(icon: Icon(Icons.check_circle), text: 'Resolved'),
+              Tab(icon: Icon(Icons.warning), text: 'Активные'),
+              Tab(icon: Icon(Icons.check_circle), text: 'Решенные'),
             ],
           ),
         ),
@@ -57,12 +57,12 @@ class _ActiveSignalsTab extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'No Active Emergencies',
+                  'Нет активных экстренных ситуаций',
                   style: Theme.of(context).textTheme.headlineSmall,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'All clear in your area',
+                  'Все чисто в вашем районе',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.grey,
                       ),
@@ -87,28 +87,28 @@ class _ActiveSignalsTab extends StatelessWidget {
 
             // Critical signals
             if (critical.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Critical', critical.length, Colors.red),
+              _buildSectionHeader(context, 'Критические', critical.length, Colors.red),
               ...critical.map((signal) => _buildSignalCard(context, signal)),
               const SizedBox(height: 16),
             ],
 
             // High priority
             if (high.isNotEmpty) ...[
-              _buildSectionHeader(context, 'High Priority', high.length, Colors.orange),
+              _buildSectionHeader(context, 'Высокий приоритет', high.length, Colors.orange),
               ...high.map((signal) => _buildSignalCard(context, signal)),
               const SizedBox(height: 16),
             ],
 
             // Medium priority
             if (medium.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Medium Priority', medium.length, Colors.amber),
+              _buildSectionHeader(context, 'Средний приоритет', medium.length, Colors.amber),
               ...medium.map((signal) => _buildSignalCard(context, signal)),
               const SizedBox(height: 16),
             ],
 
             // Low priority
             if (low.isNotEmpty) ...[
-              _buildSectionHeader(context, 'Low Priority', low.length, Colors.green),
+              _buildSectionHeader(context, 'Низкий приоритет', low.length, Colors.green),
               ...low.map((signal) => _buildSignalCard(context, signal)),
             ],
           ],
@@ -133,21 +133,21 @@ class _ActiveSignalsTab extends StatelessWidget {
                 _buildStatItem(
                   context,
                   '${stats['activeSignals']}',
-                  'Active',
+                  'Активные',
                   Colors.red,
                   Icons.warning,
                 ),
                 _buildStatItem(
                   context,
                   '${stats['criticalSignals']}',
-                  'Critical',
+                  'Критические',
                   Colors.red.shade900,
                   Icons.priority_high,
                 ),
                 _buildStatItem(
                   context,
                   '${stats['resolvedSignals']}',
-                  'Resolved',
+                  'Решенные',
                   Colors.green,
                   Icons.check_circle,
                 ),
@@ -168,7 +168,7 @@ class _ActiveSignalsTab extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Critical emergencies require immediate attention',
+                        'Критические ситуации требуют немедленного внимания',
                         style: TextStyle(
                           color: Colors.red.shade900,
                           fontWeight: FontWeight.w500,
@@ -291,7 +291,7 @@ class _ActiveSignalsTab extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'From: ${signal.senderName}',
+                          'От: ${signal.senderName}',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade600,
@@ -338,14 +338,14 @@ class _ActiveSignalsTab extends StatelessWidget {
                   Icon(Icons.share, size: 14, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
                   Text(
-                    '${signal.hopCount} hops',
+                    '${signal.hopCount} прыжков',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                   const SizedBox(width: 16),
                   Icon(Icons.priority_high, size: 14, color: Colors.grey.shade600),
                   const SizedBox(width: 4),
                   Text(
-                    'Priority: ${signal.getPriorityScore()}',
+                    'Приоритет: ${signal.getPriorityScore()}',
                     style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ],
@@ -371,11 +371,11 @@ class _ActiveSignalsTab extends StatelessWidget {
     final difference = now.difference(timestamp);
     
     if (difference.inMinutes < 1) {
-      return 'Just now';
+      return 'Только что';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
+      return '${difference.inMinutes}м назад';
     } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
+      return '${difference.inHours}ч назад';
     } else {
       return DateFormat('MMM d, HH:mm').format(timestamp);
     }
@@ -396,7 +396,7 @@ class _ResolvedSignalsTab extends StatelessWidget {
               children: [
                 Icon(Icons.history, size: 80, color: Colors.grey),
                 SizedBox(height: 16),
-                Text('No Resolved Signals'),
+                Text('Нет решенных сигналов'),
               ],
             ),
           );
@@ -436,8 +436,8 @@ class _ResolvedSignalsTab extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('From: ${signal.senderName}'),
-            Text('Resolved by: ${signal.resolvedBy ?? "Unknown"}'),
+            Text('От: ${signal.senderName}'),
+            Text('Решено: ${signal.resolvedBy ?? "Неизвестно"}'),
           ],
         ),
         trailing: const Icon(Icons.check_circle, color: Colors.green),
@@ -540,12 +540,12 @@ class _SignalDetailsSheet extends StatelessWidget {
               const SizedBox(height: 16),
               
               // Details
-              _buildDetailRow(Icons.person, 'From', signal.senderName),
-              _buildDetailRow(Icons.message, 'Message', signal.message),
-              _buildDetailRow(Icons.access_time, 'Time', 
+              _buildDetailRow(Icons.person, 'От', signal.senderName),
+              _buildDetailRow(Icons.message, 'Сообщение', signal.message),
+              _buildDetailRow(Icons.access_time, 'Время', 
                 DateFormat('MMM d, yyyy HH:mm:ss').format(signal.timestamp)),
-              _buildDetailRow(Icons.share, 'Network Hops', '${signal.hopCount}'),
-              _buildDetailRow(Icons.priority_high, 'Priority Score', 
+              _buildDetailRow(Icons.share, 'Сетевые прыжки', '${signal.hopCount}'),
+              _buildDetailRow(Icons.priority_high, 'Оценка приоритета', 
                 '${signal.getPriorityScore()}'),
               
               if (signal.routePath.isNotEmpty) ...[
@@ -553,7 +553,7 @@ class _SignalDetailsSheet extends StatelessWidget {
                 const Divider(),
                 const SizedBox(height: 16),
                 const Text(
-                  'Signal Path',
+                  'Путь сигнала',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -595,7 +595,7 @@ class _SignalDetailsSheet extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.check),
-                  label: const Text('Mark as Resolved'),
+                  label: const Text('Отметить как решенное'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     foregroundColor: Colors.white,
@@ -609,7 +609,7 @@ class _SignalDetailsSheet extends StatelessWidget {
                     Navigator.pop(context);
                   },
                   icon: const Icon(Icons.message),
-                  label: const Text('Contact Sender'),
+                  label: const Text('Связаться с отправителем'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),

@@ -234,7 +234,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'PEER OFFLINE. TX WILL QUEUE FOR RETRY.',
+                      'УЗЕЛ НЕ В СЕТИ. TX БУДЕТ В ОЧЕРЕДИ НА ПОВТОРНУЮ ПОПЫТКУ.',
                       style: TextStyle(
                         color: AppTheme.terminalPureBlack,
                         fontSize: 12,
@@ -267,7 +267,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '> SECURE CHANNEL ESTABLISHED',
+              '> БЕЗОПАСНЫЙ КАНАЛ УСТАНОВЛЕН',
               style: TextStyle(
                 color: AppTheme.terminalDarkGreen,
                 fontWeight: FontWeight.bold,
@@ -275,7 +275,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'AWAITING INPUT...',
+              'ОЖИДАНИЕ ВВОДА...',
               style: TextStyle(
                 color: AppTheme.terminalDarkGreen.withOpacity(0.5),
                 fontSize: 12,
@@ -318,13 +318,13 @@ class _ChatScreenState extends State<ChatScreen> {
             onPressed: _sendPhoto,
             icon: const Icon(Icons.camera_alt),
             color: AppTheme.terminalGreen,
-            tooltip: 'Send Photo',
+            tooltip: 'Отправить фото',
           ),
           IconButton(
             onPressed: _sendLocation,
             icon: const Icon(Icons.location_on),
             color: AppTheme.terminalGreen,
-            tooltip: 'Send Location',
+            tooltip: 'Отправить геопозицию',
           ),
           const Text('> ', style: TextStyle(color: AppTheme.terminalGreen, fontWeight: FontWeight.bold, fontSize: 18)),
           Expanded(
@@ -332,7 +332,7 @@ class _ChatScreenState extends State<ChatScreen> {
               controller: _messageController,
               style: const TextStyle(color: AppTheme.terminalGreen, fontFamily: 'Courier', fontWeight: FontWeight.bold),
               decoration: const InputDecoration(
-                hintText: 'ENTER TX...',
+                hintText: 'ВВЕДИТЕ TX...',
                 hintStyle: TextStyle(color: AppTheme.terminalDarkGreen),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -364,7 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.terminalPureBlack,
         shape: Border.all(color: AppTheme.terminalGreen, width: 2),
-        title: Text('> SYS_INFO: ${widget.peerName.toUpperCase()}', style: const TextStyle(color: AppTheme.terminalGreen)),
+        title: Text('> СИСТ_ИНФО: ${widget.peerName.toUpperCase()}', style: const TextStyle(color: AppTheme.terminalGreen)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,14 +374,14 @@ class _ChatScreenState extends State<ChatScreen> {
             _infoRow('TYPE', peer?.deviceType.toUpperCase() ?? 'UNKNOWN'),
             if (peer != null) ...[
               _infoRow('SIG', '${peer.connectionQuality}%'),
-              _infoRow('TX/RX', '${_messages.length} PACKETS'),
+              _infoRow('TX/RX', '${_messages.length} ПАКЕТОВ'),
             ],
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('[ CLOSE ]', style: TextStyle(color: AppTheme.terminalGreen)),
+            child: const Text('[ ЗАКРЫТЬ ]', style: TextStyle(color: AppTheme.terminalGreen)),
           ),
         ],
       ),
