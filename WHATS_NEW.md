@@ -1,5 +1,18 @@
 # 🚀 Crisis Mesh Messenger - What's New
 
+## ⚡ iOS Codemagic Build & Sideloadly Pipeline Stabilized
+
+**Successfully created a fully working pipeline for compiling unsigned IPAs via Codemagic for Sideloadly deployment.**
+
+### Technical Fixes Implemented:
+- **Bypassed Swift Compiler Deadlock:** Switched from removing codesign flags to injecting `CODE_SIGN_IDENTITY='-'` (Ad-Hoc signing) directly into CocoaPods (`codemagic.yaml`), preventing the `swiftc` compiler from hanging indefinitely on M2 build machines.
+- **Bypassed Flutter Provisioning Lock:** Replaced the rigid `flutter build ios` command with a pure `xcodebuild` execution to ignore the missing Apple Developer Provisioning Profile, generating a complete `.app` bundle.
+- **Dynamic Packaging:** Improved the packaging script to dynamically locate the generated `Runner.app` via the `CONFIGURATION_BUILD_DIR` parameter, ensuring successful `.ipa` zipping.
+- **Fixed Dart Compilation Error:** Resolved an error involving `Uint8List` in `encryption_service.dart` by properly importing `dart:typed_data`.
+- **Critical iOS Permissions Addressed:** Implemented runtime requests for `Permission.location`, `Permission.bluetooth`, and `Permission.nearbyWifiDevices` via `permission_handler` in `service_initializer.dart`. Without this, iOS 14+ devices would block all P2P Bluetooth and local network discovery, rendering the mesh network useless.
+
+---
+
 ## 🆘 REVOLUTIONARY EMERGENCY FEATURES
 
 Your humanitarian app just became **life-saving technology**.
