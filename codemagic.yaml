@@ -44,10 +44,10 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build App (Ad-Hoc Signing)
+      - name: Build App (Flutter Build)
         script: |
           cd ios
-          # Настраиваем только необходимые разрешения и минимальную версию iOS
+          # Настраиваем разрешения и Ad-Hoc подпись для Pods (чтобы избежать зависаний компилятора)
           sed -i '' "s/post_install do |installer|/post_install do |installer|\\
             installer.pods_project.targets.each do |target|\\
               target.build_configurations.each do |config|\\
@@ -58,27 +58,21 @@ workflows:
             end/g" Podfile
           cd ..
           
-          # Генерируем конфигурацию Flutter
-          flutter build ios --config-only --release
+          # Собираем приложение средствами Flutter
+          flutter build ios --release --no-codesign
           
-          # Запускаем сборку с Ad-Hoc подписью ("-"). Это не требует Apple ID,
-          # но удовлетворяет компилятор Swift, предотвращая зависания (deadlock).
-          cd ios
-          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO COMPILER_INDEX_STORE_ENABLE=NO
-          cd ..
-          
-          echo "Finished xcodebuild step."
+          echo "Finished Flutter build step."
 
       - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Ищем Runner.app
-          APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
+          # Flutter гарантированно кладет собранное приложение сюда:
+          APP_DIR="build/ios/iphoneos/Runner.app"
           
-          if [ -z "$APP_DIR" ] || [ $(du -sk "$APP_DIR" | cut -f1) -lt 5000 ]; then
-             echo "Error: Runner.app not found or is invalid."
+          if [ ! -d "$APP_DIR" ]; then
+             echo "Error: Runner.app not found at $APP_DIR. Build failed."
              exit 1
           fi
           
