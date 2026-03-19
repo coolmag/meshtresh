@@ -44,12 +44,12 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build Unsigned Release App
+      - name: Build Unsigned App (Debug Mode to bypass compiler deadlock)
         script: |
-          echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Release.xcconfig
-          echo "CODE_SIGNING_REQUIRED = NO" >> ios/Flutter/Release.xcconfig
-          echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
-          echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Debug.xcconfig
+          echo "CODE_SIGNING_REQUIRED = NO" >> ios/Flutter/Debug.xcconfig
+          echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Debug.xcconfig
+          echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Debug.xcconfig
           
           cd ios
           # Универсальный sed для удаления любой IDENTITY и отключения подписи
@@ -62,8 +62,8 @@ workflows:
           cd ..
           
           set +e
-          # Собираем без подписи
-          flutter build ios --release --no-codesign
+          # Собираем в Debug, чтобы избежать зависания (deadlock) Swift-компилятора
+          flutter build ios --debug --no-codesign
           set -e
           
           echo "Finished Flutter build step."
@@ -73,13 +73,14 @@ workflows:
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Если Flutter не собрал Runner.app в build, мы должны собрать его сами
+          # Ищем Runner.app
           APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
           
           if [ -z "$APP_DIR" ] || [ $(du -sk "$APP_DIR" | cut -f1) -lt 5000 ]; then
              echo "Runner.app not found or is too small (fake). Forcing xcodebuild archive without signing..."
              cd ios
-             xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -allowProvisioningUpdates || true
+             # Используем конфигурацию Debug
+             xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -allowProvisioningUpdates || true
              cd ..
              APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
           fi
