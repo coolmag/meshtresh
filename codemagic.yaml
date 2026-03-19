@@ -44,32 +44,28 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build Unsigned App (Direct Xcodebuild)
+      - name: Build App (Ad-Hoc Signing)
         script: |
-          echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Debug.xcconfig
-          echo "CODE_SIGNING_REQUIRED = NO" >> ios/Flutter/Debug.xcconfig
-          echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Debug.xcconfig
-          echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Debug.xcconfig
-          
           cd ios
-          # Универсальный sed для удаления любой IDENTITY и отключения подписи
-          sed -i '' 's/CODE_SIGN_IDENTITY = ".*";/CODE_SIGN_IDENTITY = "";/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = ".*";/"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' Runner.xcodeproj/project.pbxproj
-          sed -i '' 's/DEVELOPMENT_TEAM = .*;//g' Runner.xcodeproj/project.pbxproj
-          
+          # Настраиваем только необходимые разрешения и минимальную версию iOS
+          sed -i '' "s/post_install do |installer|/post_install do |installer|\\
+            installer.pods_project.targets.each do |target|\\
+              target.build_configurations.each do |config|\\
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\\
+                config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['\$(inherited)', 'PERMISSION_CAMERA=1', 'PERMISSION_PHOTOS=1', 'PERMISSION_LOCATION=1', 'PERMISSION_BLUETOOTH=1']\\
+                config.build_settings['CODE_SIGN_IDENTITY'] = '-'\\
+              end\\
+            end/g" Podfile
           cd ..
           
-          set +e
-          # Генерируем конфигурацию Flutter без сборки
-          flutter build ios --config-only --debug --no-codesign
+          # Генерируем конфигурацию Flutter
+          flutter build ios --config-only --release
           
-          # Запускаем xcodebuild напрямую с жестким отключением подписи и индексации
+          # Запускаем сборку с Ad-Hoc подписью ("-"). Это не требует Apple ID,
+          # но удовлетворяет компилятор Swift, предотвращая зависания (deadlock).
           cd ios
-          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" COMPILER_INDEX_STORE_ENABLE=NO -quiet
+          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=NO COMPILER_INDEX_STORE_ENABLE=NO
           cd ..
-          set -e
           
           echo "Finished xcodebuild step."
 
