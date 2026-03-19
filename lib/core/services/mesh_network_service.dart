@@ -14,12 +14,14 @@ class MeshNetworkService extends ChangeNotifier {
   final Map<String, Peer> _peers = {};
   bool _isScanning = false;
   bool _isAdvertising = false;
+  bool _isBatterySaver = false;
   String? _deviceId;
   String? _deviceName;
 
   late NearbyService _nearbyService;
   StreamSubscription? _subscription;
   StreamSubscription? _dataSubscription;
+  Timer? _batterySaverTimer;
 
   // Callbacks
   Function(Message)? onMessageReceived;
@@ -32,8 +34,46 @@ class MeshNetworkService extends ChangeNotifier {
       _peers.values.where((p) => p.status == PeerStatus.online).toList();
   bool get isScanning => _isScanning;
   bool get isAdvertising => _isAdvertising;
+  bool get isBatterySaver => _isBatterySaver;
   String? get deviceId => _deviceId;
   String? get deviceName => _deviceName;
+
+  /// Toggle Battery Saver Mode
+  void toggleBatterySaver() {
+    _isBatterySaver = !_isBatterySaver;
+    _logger.i('Battery Saver Mode: $_isBatterySaver');
+    
+    if (_isBatterySaver) {
+      _startBatterySaverCycle();
+    } else {
+      _batterySaverTimer?.cancel();
+      startScanning();
+      startAdvertising();
+    }
+    notifyListeners();
+  }
+
+  void _startBatterySaverCycle() {
+    _batterySaverTimer?.cancel();
+    // Start by sleeping
+    stopScanning();
+    stopAdvertising();
+    
+    _batterySaverTimer = Timer.periodic(const Duration(minutes: 3), (timer) async {
+      _logger.i('[BATTERY_SAVER] Waking up to sync mesh network...');
+      await startScanning();
+      await startAdvertising();
+      
+      // Stay awake for 15 seconds to sync data
+      Future.delayed(const Duration(seconds: 15), () {
+        if (_isBatterySaver) {
+          _logger.i('[BATTERY_SAVER] Going back to sleep...');
+          stopScanning();
+          stopAdvertising();
+        }
+      });
+    });
+  }
 
   /// Initialize the mesh network service
   Future<void> initialize(String deviceId, String deviceName) async {

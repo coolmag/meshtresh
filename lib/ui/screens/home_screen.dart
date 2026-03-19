@@ -68,6 +68,74 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('[CRISIS_MESH_OS]'),
         actions: [
+          // Wipe Data Button (Burn After Read)
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            color: AppTheme.errorColor,
+            tooltip: 'Уничтожить все данные',
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  backgroundColor: AppTheme.terminalPureBlack,
+                  shape: Border.all(color: AppTheme.errorColor, width: 2),
+                  title: const Text('!!! ВНИМАНИЕ !!!', style: TextStyle(color: AppTheme.errorColor, fontWeight: FontWeight.bold)),
+                  content: const Text(
+                    '> ВЫ УВЕРЕНЫ, ЧТО ХОТИТЕ УНИЧТОЖИТЬ ВСЕ ЛОКАЛЬНЫЕ ДАННЫЕ И ПЕРЕПИСКИ?\n\n> ЭТО ДЕЙСТВИЕ НЕОБРАТИМО.',
+                    style: TextStyle(color: AppTheme.errorColor, fontFamily: 'Courier'),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('[ ОТМЕНА ]', style: TextStyle(color: AppTheme.terminalGreen)),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _storageService.clearAllData();
+                        if (context.mounted) {
+                          setState(() {});
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text('> ВСЕ ДАННЫЕ УСПЕШНО УНИЧТОЖЕНЫ'),
+                              backgroundColor: AppTheme.errorColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: Border.all(color: AppTheme.terminalPureBlack, width: 1),
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('[ ПОДТВЕРДИТЬ ]', style: TextStyle(color: AppTheme.errorColor, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          // Battery Saver Toggle
+          Consumer<MeshNetworkService>(
+            builder: (context, meshService, child) {
+              final isSaver = meshService.isBatterySaver;
+              return IconButton(
+                icon: Icon(
+                  isSaver ? Icons.battery_saver : Icons.battery_full,
+                  color: isSaver ? AppTheme.terminalDarkGreen : AppTheme.terminalGreen,
+                ),
+                tooltip: isSaver ? 'Эко-режим включен' : 'Эко-режим выключен',
+                onPressed: () {
+                  meshService.toggleBatterySaver();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isSaver ? '> ЭКО-РЕЖИМ ВЫКЛЮЧЕН' : '> ЭКО-РЕЖИМ ВКЛЮЧЕН (ЭКОНОМИЯ БАТАРЕИ)'),
+                      backgroundColor: AppTheme.terminalBlack,
+                      behavior: SnackBarBehavior.floating,
+                      shape: Border.all(color: AppTheme.terminalGreen, width: 1),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
           // Emergency alerts button with badge
           Consumer<EmergencyService>(
             builder: (context, emergencyService, child) {

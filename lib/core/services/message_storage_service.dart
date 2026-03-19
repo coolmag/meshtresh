@@ -151,6 +151,17 @@ class MessageStorageService {
     _logger.d('Conversation deleted: $conversationId');
   }
 
+  /// Wipe all data (Burn After Read / Emergency Wipe)
+  Future<void> clearAllData() async {
+    if (_messagesBox != null) {
+      await _messagesBox!.clear();
+    }
+    if (_conversationsBox != null) {
+      await _conversationsBox!.clear();
+    }
+    _logger.w('ALL DATA WIPED FROM DEVICE');
+  }
+
   /// Update conversation with new message
   Future<void> updateConversationWithMessage(
     Message message,
