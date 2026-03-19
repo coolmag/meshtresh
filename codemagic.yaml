@@ -43,21 +43,22 @@ workflows:
       - name: Build Unsigned Release App
         script: |
           echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGNING_REQUIRED = NO" >> ios/Flutter/Release.xcconfig
           echo "CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           echo "EXPANDED_CODE_SIGN_IDENTITY = -" >> ios/Flutter/Release.xcconfig
           
-          # Мы должны собрать Payload, используя Payload команду. 
-          # Если xcodebuild падает с ошибкой Development Team, flutter не отдает полноценный .app
-          # Единственный вариант - отключить build_settings через ruby напрямую в pbxproj
           cd ios
-          sed -i '' 's/CODE_SIGN_IDENTITY = "Apple Development";/CODE_SIGN_IDENTITY = "";/g' Runner.xcodeproj/project.pbxproj
+          # Универсальный sed для удаления любой IDENTITY и отключения подписи
+          sed -i '' 's/CODE_SIGN_IDENTITY = ".*";/CODE_SIGN_IDENTITY = "";/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/"CODE_SIGN_IDENTITY\[sdk=iphoneos\*\]" = ".*";/"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "";/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/CODE_SIGNING_REQUIRED = YES;/CODE_SIGNING_REQUIRED = NO;/g' Runner.xcodeproj/project.pbxproj
           sed -i '' 's/CODE_SIGNING_ALLOWED = YES;/CODE_SIGNING_ALLOWED = NO;/g' Runner.xcodeproj/project.pbxproj
+          sed -i '' 's/DEVELOPMENT_TEAM = .*;//g' Runner.xcodeproj/project.pbxproj
           
           cd ..
           
           set +e
-          # Флаг no-codesign сработает лучше, если мы убрали флаги внутри Xcode
+          # Собираем без подписи
           flutter build ios --release --no-codesign
           set -e
           
