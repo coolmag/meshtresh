@@ -5,6 +5,8 @@ import 'package:logger/logger.dart';
 import 'package:flutter_nearby_connections/flutter_nearby_connections.dart' hide Message;
 import '../models/peer.dart';
 import '../models/message.dart';
+import '../di/service_locator.dart';
+import 'encryption_service.dart';
 
 /// Service managing the mesh network connections and discovery
 class MeshNetworkService extends ChangeNotifier {
@@ -241,21 +243,35 @@ class MeshNetworkService extends ChangeNotifier {
   Future<bool> sendMessage(Message message) async {
     _logger.i('Sending message: ${message.id} to ${message.recipientId}');
 
+    // Encrypt the message content before sending
+    final encryptionService = getIt<EncryptionService>();
+    final encryptedContent = encryptionService.encryptMessage(
+      message.content, 
+      message.senderId, 
+      message.recipientId,
+    );
+    
+    // Create a network-safe copy with encrypted payload
+    final networkMessage = message.copyWith(
+      encryptedContent: encryptedContent,
+      isEncrypted: true,
+    );
+
     // Check if recipient is directly connected
-    final recipient = _peers[message.recipientId];
+    final recipient = _peers[networkMessage.recipientId];
     if (recipient?.status == PeerStatus.online) {
-      return await _sendDirectMessage(message, recipient!);
+      return await _sendDirectMessage(networkMessage, recipient!);
     }
 
     // Otherwise, use epidemic routing - send to all connected peers
-    return await _broadcastMessage(message);
+    return await _broadcastMessage(networkMessage);
   }
 
   /// Send message directly to a connected peer
   Future<bool> _sendDirectMessage(Message message, Peer peer) async {
     try {
       final messageJson = jsonEncode(message.toJson());
-      _logger.d('Sending direct message to ${peer.name}: ${message.content}');
+      _logger.d('Sending direct message to ${peer.name}: [ENCRYPTED PAYLOAD]');
       _nearbyService.sendMessage(peer.id, messageJson);
       return true;
     } catch (e) {
@@ -299,14 +315,26 @@ class MeshNetworkService extends ChangeNotifier {
 
     // Check if message is for us
     if (message.recipientId == _deviceId) {
-      _logger.i('Message is for us!');
-      onMessageReceived?.call(message);
+      _logger.i('Message is for us! Decrypting...');
+      
+      Message finalMessage = message;
+      if (message.isEncrypted && message.encryptedContent != null) {
+        final encryptionService = getIt<EncryptionService>();
+        final decryptedContent = encryptionService.decryptMessage(
+          message.encryptedContent!,
+          message.senderId,
+          message.recipientId,
+        );
+        finalMessage = message.copyWith(content: decryptedContent);
+      }
+      
+      onMessageReceived?.call(finalMessage);
       return;
     }
 
-    // Forward the message if it can still hop
+    // Forward the message if it can still hop (Leave it encrypted!)
     if (message.canForward) {
-      _logger.i('Forwarding message: ${message.id}');
+      _logger.i('Forwarding encrypted message: ${message.id}');
       _broadcastMessage(message);
     } else {
       _logger.w('Message reached max hops, dropping: ${message.id}');

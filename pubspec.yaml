@@ -44,6 +44,7 @@ dependencies:
   equatable: ^2.0.5
   geolocator: ^11.0.0
   image_picker: ^1.1.2
+  crypto: ^3.0.3
 
 dev_dependencies:
   flutter_test:
