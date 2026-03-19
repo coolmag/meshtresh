@@ -44,7 +44,7 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build Unsigned App (Debug Mode to bypass compiler deadlock)
+      - name: Build Unsigned App (Direct Xcodebuild)
         script: |
           echo "CODE_SIGNING_ALLOWED = NO" >> ios/Flutter/Debug.xcconfig
           echo "CODE_SIGNING_REQUIRED = NO" >> ios/Flutter/Debug.xcconfig
@@ -62,11 +62,16 @@ workflows:
           cd ..
           
           set +e
-          # Собираем в Debug, чтобы избежать зависания (deadlock) Swift-компилятора
-          flutter build ios --debug --no-codesign
+          # Генерируем конфигурацию Flutter без сборки
+          flutter build ios --config-only --debug --no-codesign
+          
+          # Запускаем xcodebuild напрямую с жестким отключением подписи и индексации
+          cd ios
+          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" COMPILER_INDEX_STORE_ENABLE=NO -quiet
+          cd ..
           set -e
           
-          echo "Finished Flutter build step."
+          echo "Finished xcodebuild step."
 
       - name: Package IPA for Sideloadly
         script: |
@@ -77,12 +82,8 @@ workflows:
           APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
           
           if [ -z "$APP_DIR" ] || [ $(du -sk "$APP_DIR" | cut -f1) -lt 5000 ]; then
-             echo "Runner.app not found or is too small (fake). Forcing xcodebuild archive without signing..."
-             cd ios
-             # Используем конфигурацию Debug
-             xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Debug -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" EXPANDED_CODE_SIGN_IDENTITY="" -allowProvisioningUpdates || true
-             cd ..
-             APP_DIR=$(find . -name "Runner.app" -type d | head -n 1)
+             echo "Error: Runner.app not found or is invalid."
+             exit 1
           fi
           
           echo "Found app at: $APP_DIR"
