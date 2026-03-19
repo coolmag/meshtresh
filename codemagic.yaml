@@ -68,11 +68,14 @@ workflows:
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Flutter гарантированно кладет собранное приложение сюда:
-          APP_DIR="build/ios/iphoneos/Runner.app"
+          # Ищем Runner.app динамически, так как путь может немного отличаться
+          echo "Searching for Runner.app..."
+          APP_DIR=$(find build -name "Runner.app" -type d | head -n 1)
           
-          if [ ! -d "$APP_DIR" ]; then
-             echo "Error: Runner.app not found at $APP_DIR. Build failed."
+          if [ -z "$APP_DIR" ]; then
+             echo "Error: Runner.app not found anywhere in build directory."
+             # Выведем структуру папки build для отладки
+             ls -la build/ios || true
              exit 1
           fi
           
