@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/services/mesh_network_service.dart';
 import '../../core/services/message_storage_service.dart';
 import '../../core/services/emergency_service.dart';
@@ -29,7 +31,27 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeMeshNetwork();
   }
 
+  Future<void> _requestPermissions() async {
+    if (Platform.isAndroid) {
+      await [
+        Permission.location,
+        Permission.bluetooth,
+        Permission.bluetoothAdvertise,
+        Permission.bluetoothConnect,
+        Permission.bluetoothScan,
+        Permission.nearbyWifiDevices,
+      ].request();
+    } else if (Platform.isIOS) {
+      await [
+        Permission.location,
+        Permission.bluetooth,
+      ].request();
+    }
+  }
+
   Future<void> _initializeMeshNetwork() async {
+    await _requestPermissions();
+    
     final meshService = context.read<MeshNetworkService>();
     final deviceId = 'user_${DateTime.now().millisecondsSinceEpoch}';
     const deviceName = 'OPERATOR'; // Retro default name
