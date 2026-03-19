@@ -65,9 +65,10 @@ workflows:
           # Генерируем конфигурацию Flutter (только конфигурация, без сборки, чтобы Flutter не блокировал нас)
           flutter build ios --config-only --release
           
-          # Собираем приложение чистым xcodebuild. Он позволяет игнорировать отсутствие Development Team
+          # Собираем приложение чистым xcodebuild. Он позволяет игнорировать отсутствие Development Team.
+          # ВАЖНО: мы принудительно заставляем xcodebuild положить результат в нашу папку build.
           cd ios
-          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" EXPANDED_CODE_SIGN_IDENTITY="-"
+          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" EXPANDED_CODE_SIGN_IDENTITY="-" CONFIGURATION_BUILD_DIR=$PWD/../build/ios/iphoneos
           cd ..
           
           echo "Finished Xcodebuild step."
@@ -77,12 +78,13 @@ workflows:
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Ищем Runner.app в папке DerivedData (по умолчанию для чистого xcodebuild) или build/
-          echo "Searching for Runner.app..."
-          APP_DIR=$(find . -name "Runner.app" -type d | grep -v "Intermediate" | head -n 1)
+          # Теперь мы точно знаем, где лежит Runner.app
+          APP_DIR="build/ios/iphoneos/Runner.app"
           
-          if [ -z "$APP_DIR" ]; then
-             echo "Error: Runner.app not found."
+          if [ ! -d "$APP_DIR" ]; then
+             echo "Error: Runner.app not found at $APP_DIR"
+             # Выведем структуру для дебага, если вдруг не сработало
+             ls -R build/ios/iphoneos || true
              exit 1
           fi
           
