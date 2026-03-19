@@ -44,7 +44,7 @@ workflows:
           pod install --repo-update
           cd ..
 
-      - name: Build App (Flutter Build)
+      - name: Build App (Pure Xcodebuild to bypass Provisioning Profile lock)
         script: |
           cd ios
           # Настраиваем разрешения и Ad-Hoc подпись для Pods (чтобы избежать зависаний компилятора)
@@ -56,30 +56,45 @@ workflows:
                 config.build_settings['CODE_SIGN_IDENTITY'] = '-'\\
               end\\
             end/g" Podfile
+          
+          # Отключаем Development Team прямо в проекте Runner
+          sed -i '' 's/DEVELOPMENT_TEAM = .*;/DEVELOPMENT_TEAM = "";/g' Runner.xcodeproj/project.pbxproj
+          
           cd ..
           
-          # Собираем приложение средствами Flutter
-          flutter build ios --release --no-codesign
+          # Генерируем конфигурацию Flutter (только конфигурация, без сборки, чтобы Flutter не блокировал нас)
+          flutter build ios --config-only --release
           
-          echo "Finished Flutter build step."
+          # Собираем приложение чистым xcodebuild. Он позволяет игнорировать отсутствие Development Team
+          cd ios
+          xcodebuild clean build -workspace Runner.xcworkspace -scheme Runner -configuration Release -sdk iphoneos CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="-" EXPANDED_CODE_SIGN_IDENTITY="-"
+          cd ..
+          
+          echo "Finished Xcodebuild step."
 
       - name: Package IPA for Sideloadly
         script: |
           set -e
           mkdir -p build/ios/ipa/Payload
           
-          # Ищем Runner.app динамически, так как путь может немного отличаться
+          # Ищем Runner.app в папке DerivedData (по умолчанию для чистого xcodebuild) или build/
           echo "Searching for Runner.app..."
-          APP_DIR=$(find build -name "Runner.app" -type d | head -n 1)
+          APP_DIR=$(find . -name "Runner.app" -type d | grep -v "Intermediate" | head -n 1)
           
           if [ -z "$APP_DIR" ]; then
-             echo "Error: Runner.app not found anywhere in build directory."
-             # Выведем структуру папки build для отладки
-             ls -la build/ios || true
+             echo "Error: Runner.app not found."
              exit 1
           fi
           
-          echo "Found app at: $APP_DIR"
+          # Проверка размера (чтобы не упаковать "пустышку")
+          APP_SIZE=$(du -sk "$APP_DIR" | cut -f1)
+          echo "Found app at: $APP_DIR (Size: $APP_SIZE KB)"
+          
+          if [ "$APP_SIZE" -lt 5000 ]; then
+             echo "Error: Runner.app is too small ($APP_SIZE KB). Build failed to produce a valid app."
+             exit 1
+          fi
+          
           cp -r "$APP_DIR" build/ios/ipa/Payload/
           
           cd build/ios/ipa
